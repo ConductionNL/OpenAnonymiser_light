@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: openanonymiser
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: dev
+            namespace: openanonymiser-dev
+            cluster: https://kubernetes.default.svc
+            branch: development
+          - env: acc
+            namespace: openanonymiser-acc
+            cluster: https://kubernetes.default.svc
+            branch: staging
+          - env: prod
+            namespace: openanonymiser-prod
+            cluster: https://kubernetes.default.svc
+            branch: main
+
+  template:
+    metadata:
+      name: "openanonymiser-{{env}}"
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/ConductionNL/OpenAnonymiser_light.git
+        targetRevision: "{{branch}}"
+        path: "k8s/overlays/{{env}}"
+      destination:
+        server: "{{cluster}}"
+        namespace: "{{namespace}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

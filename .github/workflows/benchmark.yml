@@ -1,0 +1,41 @@
+name: PII Detection Benchmark
+
+on:
+  push:
+    branches: [ main, staging ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    name: Evaluate PII detection quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Start API
+        run: |
+          uv run api.py &
+          echo "API_PID=$!" >> $GITHUB_ENV
+          sleep 20
+
+      - name: Run benchmark
+        run: uv run benchmarks/evaluate.py --fail-on-threshold
+
+      - name: Stop API
+        if: always()
+        run: kill $API_PID || true

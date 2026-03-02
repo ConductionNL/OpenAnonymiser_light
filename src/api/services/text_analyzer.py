@@ -8,20 +8,7 @@ from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import EngineResult, OperatorConfig
 
 from src.api.config import settings
-from src.api.utils.patterns import (
-    CaseNumberRecognizer,
-    DutchBSNRecognizer,
-    DutchDateRecognizer,
-    DutchDriversLicenseRecognizer,
-    DutchIBANRecognizer,
-    DutchKvKRecognizer,
-    DutchLicensePlateRecognizer,
-    DutchPassportIdRecognizer,
-    DutchPhoneNumberRecognizer,
-    DutchVATRecognizer,
-    EmailRecognizer,
-    IPv4Recognizer,
-)
+from src.api.utils.plugin_loader import load_plugins
 
 logger = logging.getLogger(__name__)
 
@@ -29,98 +16,53 @@ logger = logging.getLogger(__name__)
 _analyzer_engine: Optional[AnalyzerEngine] = None
 _anonymizer_engine: Optional[AnonymizerEngine] = None
 
-# Entity types produced by pattern recognizers (regex-based, high precision).
-_PATTERN_ENTITY_TYPES: frozenset[str] = frozenset(
-    {
-        "PHONE_NUMBER",
-        "EMAIL",
-        "IBAN",
-        "BSN",
-        "DATE_TIME",
-        "ID_NO",
-        "DRIVERS_LICENSE",
-        "VAT_NUMBER",
-        "KVK_NUMBER",
-        "LICENSE_PLATE",
-        "IP_ADDRESS",
-        "CASE_NO",
-    }
-)
-
-# Entity types produced by SpaCy NER.
-_NER_ENTITY_TYPES: frozenset[str] = frozenset({"PERSON", "LOCATION", "ORGANIZATION"})
-
-# Dutch SpaCy label → Presidio entity mapping.
-# nl_core_news_* uses PER/LOC/ORG/GPE; GPE covers cities and countries.
-_NL_LABEL_MAPPING = {
-    "PER": "PERSON",
-    "PERSON": "PERSON",
-    "LOC": "LOCATION",
-    "LOCATION": "LOCATION",
-    "GPE": "LOCATION",
-    "ORG": "ORGANIZATION",
-    "ORGANIZATION": "ORGANIZATION",
-}
+# Populated by _build_analyzer() from the loaded plugin configuration.
+_PATTERN_ENTITY_TYPES: frozenset[str] = frozenset()
+_NER_ENTITY_TYPES: frozenset[str] = frozenset()
 
 
 def _build_analyzer() -> AnalyzerEngine:
-    """Build Presidio AnalyzerEngine for Dutch text.
+    """Build Presidio AnalyzerEngine from plugin configuration (plugins.yaml).
 
-    Uses SpacyRecognizer for NER (PERSON/LOCATION/ORGANIZATION) and
-    custom PatternRecognizer subclasses for all other Dutch PII types.
+    Reads src/api/plugins.yaml (or PLUGINS_CONFIG env var) and instantiates
+    all enabled recognizers. Pattern recognizers and optional transformer/LLM
+    modules are loaded via the plugin_loader.
     """
-    nlp_config = {
-        "nlp_engine_name": "spacy",
-        "models": [
-            {"lang_code": settings.DEFAULT_LANGUAGE, "model_name": settings.DEFAULT_SPACY_MODEL}
-        ],
-        "ner_model_configuration": {
-            "labels_to_ignore": [],  # keep all labels; default ignores ORG
-            "model_to_presidio_entity_mapping": _NL_LABEL_MAPPING,
-            "low_score_entity_names": [],
-            "default_score": 0.85,
-        },
-    }
+    global _PATTERN_ENTITY_TYPES, _NER_ENTITY_TYPES
 
-    nlp_engine = NlpEngineProvider(nlp_configuration=nlp_config).create_engine()
+    plugin_cfg = load_plugins()
+    _PATTERN_ENTITY_TYPES = plugin_cfg.pattern_entity_types
+    _NER_ENTITY_TYPES = plugin_cfg.ner_entity_types
+
+    nlp_engine = NlpEngineProvider(
+        nlp_configuration=plugin_cfg.ner_config
+    ).create_engine()
 
     registry = RecognizerRegistry()
-    registry.supported_languages = [settings.DEFAULT_LANGUAGE]
+    registry.supported_languages = [plugin_cfg.language]
 
-    # NER via Presidio's SpacyRecognizer — handles Dutch PER/LOC/GPE/ORG with scoring
-    registry.add_recognizer(
-        SpacyRecognizer(
-            supported_language=settings.DEFAULT_LANGUAGE,
-            supported_entities=["PERSON", "LOCATION", "ORGANIZATION"],
-            ner_strength=0.85,
+    if plugin_cfg.ner_config:
+        registry.add_recognizer(
+            SpacyRecognizer(
+                supported_language=plugin_cfg.language,
+                supported_entities=list(plugin_cfg.ner_entity_types),
+                ner_strength=plugin_cfg.ner_config.get(
+                    "ner_model_configuration", {}
+                ).get("default_score", 0.85),
+            )
         )
-    )
 
-    # Dutch pattern recognizers
-    for recognizer in [
-        DutchPhoneNumberRecognizer(),
-        DutchIBANRecognizer(),
-        DutchBSNRecognizer(),
-        DutchDateRecognizer(),
-        EmailRecognizer(),
-        DutchPassportIdRecognizer(),
-        DutchDriversLicenseRecognizer(),
-        DutchVATRecognizer(),
-        DutchKvKRecognizer(),
-        DutchLicensePlateRecognizer(),
-        IPv4Recognizer(),
-        CaseNumberRecognizer(),
-    ]:
+    for recognizer in plugin_cfg.recognizers:
         registry.add_recognizer(recognizer)
 
     engine = AnalyzerEngine(
         nlp_engine=nlp_engine,
         registry=registry,
-        supported_languages=[settings.DEFAULT_LANGUAGE],
+        supported_languages=[plugin_cfg.language],
     )
     logger.info(
         "AnalyzerEngine initialized: SpacyRecognizer (NER) + %d pattern recognizers",
-        12,
+        len(plugin_cfg.recognizers),
     )
     return engine
 

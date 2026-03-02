@@ -1,0 +1,19 @@
+# Minimum precision en recall per entiteitstype.
+# evaluate.py exitcodet 1 als een drempel niet gehaald wordt.
+# Drempels zijn conservatief ingesteld; verhoog geleidelijk naarmate de dataset groeit.
+
+PERSON:          {precision: 0.70, recall: 0.70}
+LOCATION:        {precision: 0.70, recall: 0.70}
+ORGANIZATION:    {precision: 0.70, recall: 0.70}
+PHONE_NUMBER:    {precision: 0.80, recall: 0.80}
+EMAIL:           {precision: 0.90, recall: 0.90}
+IBAN:            {precision: 0.90, recall: 0.90}
+BSN:             {precision: 0.85, recall: 0.85}
+DATE_TIME:       {precision: 0.80, recall: 0.80}
+DRIVERS_LICENSE: {precision: 0.70, recall: 0.70}
+LICENSE_PLATE:   {precision: 0.80, recall: 0.80}
+KVK_NUMBER:      {precision: 0.80, recall: 0.80}
+VAT_NUMBER:      {precision: 0.80, recall: 0.80}
+CASE_NO:         {precision: 0.70, recall: 0.70}
+ID_NO:           {precision: 0.70, recall: 0.70}
+IP_ADDRESS:      {precision: 0.85, recall: 0.85}

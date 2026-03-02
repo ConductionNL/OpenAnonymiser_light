@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openanonymiser-prod
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+images:
+  - name: docker.io/mwest2020/openanonymiser-light
+    newTag: latest
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: Deployment
+      name: openanonymiser
+  - patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.openanonymiser.commonground.nu
+      - op: replace
+        path: /spec/tls/0/hosts/0
+        value: api.openanonymiser.commonground.nu
+      - op: replace
+        path: /spec/tls/0/secretName
+        value: openanonymiser-prod-tls
+    target:
+      kind: Ingress
+      name: openanonymiser
+
+configMapGenerator:
+  - name: openanonymiser-config
+    envs:
+      - config.env
+
+labels:
+  - pairs:
+      environment: prod

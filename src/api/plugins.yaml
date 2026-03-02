@@ -1,0 +1,83 @@
+# OpenAnonymiser plugin configuratie.
+# Voeg nieuwe recognizers toe zonder Python-code te schrijven.
+# Zet enabled: false om een module tijdelijk uit te schakelen.
+#
+# Ondersteunde typen:
+#   pattern     — bestaande PatternRecognizer subclasses uit src/api/utils/patterns.py
+#   spacy       — SpaCy NER (NER-engine; altijd precies één entry)
+#   transformer — HuggingFace transformers NER (vereist: pip install transformers torch)
+#   llm         — LLM-gebaseerde extractie (vereist: pip install openai / anthropic)
+
+language: nl
+
+ner:
+  type: spacy
+  model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
+  entities: [PERSON, LOCATION, ORGANIZATION]
+  ner_strength: 0.85
+  enabled: true
+
+recognizers:
+  - name: DutchPhoneNumberRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchIBANRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchBSNRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchDateRecognizer
+    type: pattern
+    enabled: true
+
+  - name: EmailRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchPassportIdRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchDriversLicenseRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchVATRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchKvKRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchLicensePlateRecognizer
+    type: pattern
+    enabled: true
+
+  - name: IPv4Recognizer
+    type: pattern
+    enabled: true
+
+  - name: CaseNumberRecognizer
+    type: pattern
+    enabled: true
+
+  # Optionele modules — standaard uitgeschakeld.
+  # Schakel in door enabled: true te zetten en de vereiste packages te installeren.
+
+  # - name: DutchBERTRecognizer
+  #   type: transformer
+  #   model: "wietsedv/bert-base-dutch-cased"
+  #   entities: [PERSON, LOCATION, ORGANIZATION]
+  #   enabled: false
+
+  # - name: DutchLLMRecognizer
+  #   type: llm
+  #   provider: openai
+  #   model: gpt-4o-mini
+  #   entities: [PERSON, LOCATION, ORGANIZATION]
+  #   enabled: false

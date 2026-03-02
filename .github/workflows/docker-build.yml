@@ -17,20 +17,56 @@ env:
   IMAGE_NAME: mwest2020/openanonymiser-light
 
 jobs:
-  build:
+  test:
+    name: Unit tests (required before build)
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for git describe
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Start API
+        run: |
+          uv run api.py &
+          echo "API_PID=$!" >> $GITHUB_ENV
+          sleep 20
+
+      - name: Run tests
+        run: pytest tests/ -q
+
+      - name: Stop API
+        if: always()
+        run: kill $API_PID || true
+
+  build:
+    name: Build and push image
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
           ref: ${{ github.event.inputs.ref || github.ref }}
 
       - name: Determine version and tags
         id: meta
         run: |
-          # Determine REF (for manual dispatch use input)
           REF="${{ github.event.inputs.ref }}"
           if [[ -z "$REF" ]]; then
             REF="${GITHUB_REF#refs/heads/}"
@@ -38,23 +74,22 @@ jobs:
           echo "Using REF=$REF"
 
           if [[ "$REF" == "main" ]]; then
-            # Main branch - push version, latest and main
-            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.2.0")
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.3.0")
             TAGS="${{ env.IMAGE_NAME }}:${VERSION},${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:main"
-          elif [[ "$REF" == "staging" || "$REF" == "development" ]]; then
-            # Staging/development branches - always dev tag
+          elif [[ "$REF" == "staging" ]]; then
+            VERSION="acc"
+            TAGS="${{ env.IMAGE_NAME }}:acc"
+          elif [[ "$REF" == "development" ]]; then
             VERSION="dev"
             TAGS="${{ env.IMAGE_NAME }}:dev"
           elif [[ "$REF" == v* ]]; then
-            # Explicit version tag
             VERSION="$REF"
             TAGS="${{ env.IMAGE_NAME }}:${VERSION}"
           else
-            # PR or other branch - dev tag only (no push)
             VERSION="dev-${GITHUB_SHA::7}"
             TAGS="${{ env.IMAGE_NAME }}:dev"
           fi
-          
+
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "📦 Building version: ${VERSION}" >> $GITHUB_STEP_SUMMARY

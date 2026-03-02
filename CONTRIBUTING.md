@@ -10,9 +10,8 @@
 - **Type Checking:**  
   - Gebruik [`mypy`](https://mypy-lang.org/) voor type checking.
   - **Let op:** De mypy-daemon is traag; gebruik de CLI (`mypy .`) in CI/CD of handmatig.
-- **Docstrings & Documentatie:**  
-  - Gebruik Sphinx-style docstrings voor alle publieke functies, klassen en modules.
-  - Genereer documentatie met Sphinx indien gewenst.
+- **Docstrings & Documentatie:**
+  - Gebruik Google-style docstrings voor alle publieke functies, klassen en modules.
 - **Package Management:**  
   - Gebruik [`uv`](https://github.com/astral-sh/uv) als package manager voor dependency management en virtuele omgevingen.
   - Alle tools en dependencies worden beheerd via `pyproject.toml`.
@@ -23,7 +22,6 @@
   - Linting, type checking en tests worden automatisch uitgevoerd in de CI/CD pipeline.
   - Gebruik `mypy` via de CLI in CI, niet als daemon.
 - **Git:**
-  - Run `scripts/precommit.sh` voor commit hooks (ruff + mypy).
   - Houd duidelijke commit messages aan, bij voorkeur in de vorm van `feat: [description]` of `fix: [description]`.
 
 ### Best Practices
@@ -69,3 +67,11 @@ PR-regels:
    - `pytest`
 5. Voeg docstrings toe waar nodig, en hanteer de Google-stijl voor Docstrings.
 6. Maak een pull request.
+
+---
+
+## Agentic engineering
+
+Dit project wordt actief ontwikkeld met behulp van [Claude Code](https://claude.ai/claude-code) (Anthropic). De ontwikkelworkflow maakt gebruik van AI-ondersteunde code-assistentie voor refactoring, testen en documentatie.
+
+De bijbehorende Claude-configuratie (gedragsregels, geheugenbestanden, hooks) is projectspecifiek en wordt **niet meegeleverd in de repository**. Neem contact op met [Conduction](https://conduction.nl) of [Centric](https://www.centric.eu) als je met dezelfde setup wil werken.
