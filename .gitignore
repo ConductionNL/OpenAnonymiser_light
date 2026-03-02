@@ -87,16 +87,12 @@ Thumbs.db
 # Deployment configurations with sensitive info
 *-prod.yaml
 *-accept.yaml
-*cluster*.yaml \ntest_results.json\n
+*cluster*.yaml
+test_results.json
 
-# Claude Code – device/user-specifiek (nooit committen)
-.claude/settings.local.json
-.claude/todos/
-.claude/debug/
-.claude/shell-snapshots/
-.claude/file-history/
-.claude/ide/
-.claude/backups/
+# Claude Code – lokaal tooling, niet relevant voor andere gebruikers
+.claude/
+CLAUDE.md
 
 # Venv
 .venv/
