@@ -14,7 +14,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: mwest2020/openanonymiser
+  IMAGE_NAME: mwest2020/openanonymiser-light
 
 jobs:
   build:
@@ -88,4 +88,4 @@ jobs:
             echo "- \`${tag}\`" >> $GITHUB_STEP_SUMMARY
           done
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🎯 **ArgoCD can now deploy:** \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Version:** \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY

@@ -3,11 +3,13 @@ from os import environ
 import click
 import uvicorn
 
+from scripts.check_deps import check_versions
+
 
 @click.command()
 @click.option(
     "--env",
-    type=click.Choice(["development", "staging", "production"]), 
+    type=click.Choice(["development", "staging", "production"]),
     default="development",
 )
 @click.option(
@@ -26,6 +28,8 @@ import uvicorn
     default=1,
 )
 def main(env: str, host: str, port: int, workers: int) -> None:
+    print("Dependency versions:")
+    check_versions()
     print(f"Serving on {host}:{port} with {workers} workers in {env} mode.")
     # set environment variable with SERVER_MODE
     environ["UVICORN_SERVER_MODE"] = env

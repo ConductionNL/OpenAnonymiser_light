@@ -44,11 +44,11 @@ class DutchIBANRecognizer(PatternRecognizer):
                 r"\bNL\d{2}\s?[A-Z]{4}(?:\s?\d{10}|\s?\d{4}\s?\d{4}\s?\d{2})\b",
                 0.6,
             ),
-            # Algemeen internationaal IBAN-patroon (min 15, max 34 tekens), met optionele spaties
-            # Landcode (2 letters) + controlegetal (2 cijfers) + BBAN (alfa-numeriek)
+            # Internationaal IBAN (niet-NL landcodes; min 2 groepen van 4 na het controlegetal)
+            # NL wordt uitgesloten: NL IBANs vallen onder DUTCH_IBAN, BTW-nummers beginnen ook met NL
             Pattern(
                 "INTL_IBAN",
-                r"\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,4})?\b",
+                r"\b(?!NL)[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,4})?\b",
                 0.55,
             ),
         ]
@@ -171,7 +171,7 @@ class DutchLicensePlateRecognizer(PatternRecognizer):
 # Taal-onafhankelijke IPv4-adres-herkenner
 class IPv4Recognizer(PatternRecognizer):
     def __init__(
-        self, context: Optional[List[str]] = None, supported_language: str = "any"
+        self, context: Optional[List[str]] = None, supported_language: str = "nl"
     ) -> None:
         pattern = Pattern(
             "IPV4",

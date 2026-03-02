@@ -4,6 +4,20 @@ Alle belangrijke wijzigingen in dit project worden in dit bestand gedocumenteerd
 
 De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) en dit project maakt gebruik van [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-02
+
+### Removed
+- Document endpoints (`/documents/upload`, `/documents/{id}/anonymize`, `/documents/{id}/download`)
+- SQLite database, file storage, crypto layer
+- Transformers/HuggingFace NER engine (torch, transformers, wietsedv/bert-base-dutch-cased-finetuned-sonar-neTagger)
+- React UI (`src/ui/`)
+- PDF-processing (`pikepdf`, `pymupdf`)
+
+### Changed
+- Deployment is nu volledig stateless (`persistence.enabled: false` in Helm)
+- SpaCy `nl_core_news_md` gebakken in Docker image (geen runtime download)
+- Docs volledig herschreven naar `docs/` (getting-started, api-reference, configuration, deployment)
+
 ## [1.2.0] - 2025-01-30
 
 ### Added

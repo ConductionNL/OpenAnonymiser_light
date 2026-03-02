@@ -1,22 +1,16 @@
 [project]
 name = "OpenAnonymizer"
 version = "0.1.0"
-description = "Dutch-based Anonimyzer for PII data in pdfs."
+description = "Dutch-based Anonymizer for PII detection in text (presidio + SpaCy NER + regex patterns)."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
 dependencies = [
     "fastapi[all]>=0.115.12",
     "presidio-analyzer>=2.2.358",
-    "transformers>=4.51.3",
-    "nl_core_news_lg",
-    "torch>=2.7.0",
     "presidio-anonymizer>=2.2.358",
-    "pikepdf>=9.9.0",
+    "nl_core_news_lg",
     "python-dotenv>=1.1.0",
-    "pycryptodome>=3.23.0",
-    "sqlalchemy>=2.0.41",
-    "pymupdf>=1.26.3",
 ]
 authors = [
     { name = "Mark Westerweel", email = "mark.westerweel@conduction.nl" },
@@ -52,15 +46,21 @@ follow_untyped_imports = true
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = "-ra"
 testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers --disable-warnings --color=yes --durations=10"
+markers = [
+    "slow: marks tests as slow (deselect with '-m not slow')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
 
 [dependency-groups]
-flair = [
-    "flair>=0.15.1",
-]
 dev = [
+    "bandit>=1.9.4",
     "httpx>=0.28.1",
     "pytest>=8.4.1",
-    "pytest-json-report>=1.5.0",
 ]

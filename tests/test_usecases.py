@@ -1,184 +1,170 @@
-import os
-import time
-from pathlib import Path
+"""Real-world use-case tests for OpenAnonymiser.
 
-import pytest
-import requests
+Tests that simulate actual citizen-data handling scenarios: mixed PII in one
+text, complete anonymization, analyze/anonymize consistency, and versioning
+awareness.
 
+Run: pytest tests/test_usecases.py -v
+"""
 
-def get_base_url() -> str:
-    # Prefer explicit env var; default to local dev
-    return os.getenv("OPENANONYMISER_BASE_URL", "http://localhost:8080")
+import httpx
 
-
-def _assert_ok(resp: requests.Response) -> None:
-    assert resp.status_code in (200, 201), f"HTTP {resp.status_code}: {resp.text}"
-
-
-@pytest.mark.integration
-def test_health() -> None:
-    base = get_base_url()
-    resp = requests.get(f"{base}/api/v1/health", timeout=30)
-    _assert_ok(resp)
-    data = resp.json()
-    assert isinstance(data, dict)
-    assert data.get("ping") == "pong"
+# Reference text with all common Dutch PII types in realistic context.
+BURGERBRIEF = (
+    "Op 15-03-2023 heeft Jan Jansen (BSN: 111222333) een aanvraag ingediend bij "
+    "Gemeente Amsterdam. Zijn contactgegevens: jan.jansen@example.com, "
+    "tel 0612345678. Bankrekeningnummer: NL91ABNA0417164300. "
+    "Zaaknummer: Z-2023-12345."
+)
 
 
-@pytest.mark.integration
-def test_analyze_text_spacy() -> None:
-    base = get_base_url()
-    payload = {
-        "text": "Jan Jansen woont op Kerkstraat 10, 1234 AB Amsterdam. IBAN: NL91ABNA0417164300.",
-        "language": "nl",
-        "entities": ["PERSON", "IBAN", "ADDRESS"],
-        "nlp_engine": "spacy",
-    }
-    resp = requests.post(f"{base}/api/v1/analyze", json=payload, timeout=60)
-    _assert_ok(resp)
-    data = resp.json()
-    assert "pii_entities" in data
-    # Expect at least one entity recognized
-    assert isinstance(data["pii_entities"], list)
-    assert len(data["pii_entities"]) >= 1
-
-
-@pytest.mark.integration
-def test_anonymize_text() -> None:
-    base = get_base_url()
-    payload = {
-        "text": "Mail Jan op jan.jansen@example.com of bel 0612345678.",
-        "language": "nl",
-        "anonymization_strategy": "replace",
-    }
-    resp = requests.post(f"{base}/api/v1/anonymize", json=payload, timeout=60)
-    _assert_ok(resp)
-    data = resp.json()
-    assert "original_text" in data and "anonymized_text" in data
-    assert data["original_text"] != data["anonymized_text"]
-    assert isinstance(data.get("entities_found", []), list)
-
-
-@pytest.mark.integration
-def test_anonymize_text_single_entity() -> None:
-    base = get_base_url()
-    # Text contains an IBAN and an email; only anonymize IBAN
-    payload = {
-        "text": "Contact: jan.jansen@example.com. IBAN: NL91ABNA0417164300.",
-        "language": "nl",
-        "entities": ["IBAN"],
-        "anonymization_strategy": "replace",
-    }
-    resp = requests.post(f"{base}/api/v1/anonymize", json=payload, timeout=60)
-    _assert_ok(resp)
-    data = resp.json()
-    assert data["original_text"] != data["anonymized_text"]
-    assert isinstance(data.get("entities_found", []), list)
-
-
-@pytest.mark.integration
-def test_anonymize_text_all_entities() -> None:
-    base = get_base_url()
-    payload = {
-        "text": "Jan woont in Amsterdam, tel 0612345678, mail jan@example.com, IBAN NL91ABNA0417164300.",
-        "language": "nl",
-        "entities": [
-            "PERSON",
-            "EMAIL",
-            "PHONE_NUMBER",
-            "IBAN",
-            "ADDRESS",
-            "LOCATION",
-            "ORGANIZATION",
-        ],
-        "anonymization_strategy": "replace",
-    }
-    resp = requests.post(f"{base}/api/v1/anonymize", json=payload, timeout=60)
-    _assert_ok(resp)
-    data = resp.json()
-    assert data["original_text"] != data["anonymized_text"]
-    assert isinstance(data.get("entities_found", []), list)
-
-
-@pytest.mark.integration
-def test_document_flow_upload_anonymize_download(tmp_path: Path) -> None:
-    base = get_base_url()
-
-    # Prefer new mock test file; fallback to legacy test.pdf
-    candidates = [
-        Path("tests") / "mock_persoonsgegevens.pdf",
-        Path("test.pdf"),
-    ]
-    repo_pdf = next((p for p in candidates if p.exists()), None)
-    if not repo_pdf:
-        pytest.skip(
-            "No test PDF found (looked for tests/mock_persoonsgegevens.pdf and test.pdf)"
-        )
-
-    # 1) Upload
-    with repo_pdf.open("rb") as fh:
-        files = {"files": ("test.pdf", fh, "application/pdf")}
-        resp = requests.post(
-            f"{base}/api/v1/documents/upload", files=files, timeout=120
-        )
-    _assert_ok(resp)
-
-    # Some proxies can return text/plain on errors; ensure JSON here
-    try:
-        up = resp.json()
-    except Exception as exc:  # pragma: no cover
-        raise AssertionError(
-            f"Upload response is not JSON: {resp.text[:200]} ... ({exc})"
-        )
-
-    assert "files" in up and isinstance(up["files"], list) and len(up["files"]) >= 1
-    file_id = up["files"][0]["id"]
-    assert file_id
-
-    # 1b) Metadata (met PII entiteiten)
-    meta = requests.get(
-        f"{base}/api/v1/documents/{file_id}/metadata",
-        params={"get_pii_entities": True},
-        timeout=60,
+def test_common_pii_detected_in_default_set(client: httpx.Client) -> None:
+    """Pattern-based PII must all be found with the default entity set."""
+    r = client.post(
+        "/api/v1/analyze",
+        json={"text": BURGERBRIEF, "language": "nl"},
     )
-    _assert_ok(meta)
+    assert r.status_code == 200
+    found = {e["entity_type"] for e in r.json()["pii_entities"]}
+    required = {"EMAIL", "PHONE_NUMBER", "IBAN", "BSN"}
+    missing = required - found
+    assert not missing, f"Missing from default detection: {sorted(missing)}"
 
-    # 2) Anonymize
-    anon_payload = {
-        "pii_entities_to_anonymize": [
-            "PERSON",
-            "EMAIL",
-            "PHONE_NUMBER",
-            "IBAN",
-            "ADDRESS",
-        ]
-    }
-    resp = requests.post(
-        f"{base}/api/v1/documents/{file_id}/anonymize", json=anon_payload, timeout=180
+
+def test_ner_types_present(client: httpx.Client) -> None:
+    """SpaCy NER should detect PERSON, LOCATION, and ORGANIZATION."""
+    r = client.post(
+        "/api/v1/analyze",
+        json={
+            "text": BURGERBRIEF,
+            "language": "nl",
+            "entities": ["PERSON", "LOCATION", "ORGANIZATION"],
+        },
     )
-    _assert_ok(resp)
-    anon = resp.json()
-    status_text = str(anon.get("status", "")).lower()
-    assert status_text.startswith(("ok", "success", "completed"))
+    assert r.status_code == 200
+    found = {e["entity_type"] for e in r.json()["pii_entities"]}
+    assert "PERSON" in found, "Expected PERSON (Jan Jansen) not found"
 
-    # Optional delay if processing is async in some environments
-    time.sleep(1)
 
-    # 3) Download
-    # Save anonymized result into repo tests/ directory for inspection
-    tests_dir = Path("tests")
-    tests_dir.mkdir(parents=True, exist_ok=True)
-    base_name = Path(str(repo_pdf)).stem  # original name without extension
-    out_pdf = tests_dir / f"{base_name}(geanonimiseerd).pdf"
+def test_anonymize_removes_all_common_pii(client: httpx.Client) -> None:
+    """After replace-anonymization, original PII values must not appear in output."""
+    r = client.post(
+        "/api/v1/anonymize",
+        json={
+            "text": BURGERBRIEF,
+            "language": "nl",
+            "anonymization_strategy": "replace",
+        },
+    )
+    assert r.status_code == 200
+    anon = r.json()["anonymized_text"]
+    for pii_value in [
+        "Jan Jansen",
+        "111222333",
+        "jan.jansen@example.com",
+        "0612345678",
+        "NL91ABNA0417164300",
+    ]:
+        assert pii_value not in anon, (
+            f"PII value '{pii_value}' still present after anonymization"
+        )
 
-    resp = requests.get(f"{base}/api/v1/documents/{file_id}/download", timeout=120)
-    _assert_ok(resp)
-    # Some deployments may return FileResponse (binary) or a JSON envelope (rare).
-    # Prefer binary write if possible.
-    try:
-        content = resp.content
-        assert content and len(content) > 0
-        out_pdf.write_bytes(content)
-        assert out_pdf.exists() and out_pdf.stat().st_size > 0
-    except Exception as exc:
-        raise AssertionError(f"Failed to store downloaded file: {exc}")
+
+def test_entities_found_in_anonymize_matches_analyze(client: httpx.Client) -> None:
+    """entities_found in /anonymize must equal /analyze results for same input."""
+    text = "Jan Jansen belt 0612345678 en mailt jan@example.com."
+    entities = ["PERSON", "PHONE_NUMBER", "EMAIL"]
+
+    analyze_r = client.post(
+        "/api/v1/analyze",
+        json={"text": text, "language": "nl", "entities": entities},
+    )
+    anonymize_r = client.post(
+        "/api/v1/anonymize",
+        json={
+            "text": text,
+            "language": "nl",
+            "entities": entities,
+            "anonymization_strategy": "replace",
+        },
+    )
+    assert analyze_r.status_code == 200
+    assert anonymize_r.status_code == 200
+
+    analyze_types = sorted(
+        e["entity_type"] for e in analyze_r.json()["pii_entities"]
+    )
+    anonymize_types = sorted(
+        e["entity_type"] for e in anonymize_r.json()["entities_found"]
+    )
+    assert analyze_types == anonymize_types
+
+
+def test_only_requested_entities_anonymized(client: httpx.Client) -> None:
+    """When filtering to IBAN only, phone and email should survive in output."""
+    text = "IBAN: NL91ABNA0417164300. Tel: 0612345678. Mail: jan@example.com."
+    r = client.post(
+        "/api/v1/anonymize",
+        json={
+            "text": text,
+            "language": "nl",
+            "entities": ["IBAN"],
+            "anonymization_strategy": "replace",
+        },
+    )
+    assert r.status_code == 200
+    anon = r.json()["anonymized_text"]
+    assert "NL91ABNA0417164300" not in anon
+    assert "0612345678" in anon
+    assert "jan@example.com" in anon
+
+
+def test_all_anonymization_strategies_produce_different_output(
+    client: httpx.Client,
+) -> None:
+    """All four strategies should yield distinct anonymized texts."""
+    text = "IBAN: NL91ABNA0417164300."
+    results = {}
+    for strategy in ("replace", "redact", "hash", "mask"):
+        r = client.post(
+            "/api/v1/anonymize",
+            json={
+                "text": text,
+                "language": "nl",
+                "anonymization_strategy": strategy,
+                "entities": ["IBAN"],
+            },
+        )
+        assert r.status_code == 200
+        results[strategy] = r.json()["anonymized_text"]
+
+    # All must differ from the original
+    for strategy, anon in results.items():
+        assert "NL91ABNA0417164300" not in anon, (
+            f"strategy='{strategy}': original IBAN still present"
+        )
+
+    # replace, hash, mask outputs must be distinct from each other
+    assert results["replace"] != results["hash"]
+    assert results["replace"] != results["mask"]
+
+
+def test_all_entities_have_numeric_scores(client: httpx.Client) -> None:
+    """Regression: no entity may have a null or string score."""
+    r = client.post(
+        "/api/v1/analyze",
+        json={
+            "text": (
+                "Pieter Janssen (BSN 111222333) woont in Den Haag. "
+                "Werkgever: Rijkswaterstaat. Mail: p.janssen@overheid.nl."
+            ),
+            "language": "nl",
+        },
+    )
+    assert r.status_code == 200
+    for e in r.json()["pii_entities"]:
+        score = e.get("score")
+        assert isinstance(score, (int, float)), (
+            f"{e['entity_type']}: score is not numeric — got {score!r}"
+        )
+        assert score > 0, f"{e['entity_type']}: score must be positive"

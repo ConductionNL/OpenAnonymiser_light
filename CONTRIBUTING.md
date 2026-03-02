@@ -23,7 +23,7 @@
   - Linting, type checking en tests worden automatisch uitgevoerd in de CI/CD pipeline.
   - Gebruik `mypy` via de CLI in CI, niet als daemon.
 - **Git:**
-  - Run `scripts/precommit.sh` (bash) of `scripts\precommit.Ps1` (PS) voor commit hooks.
+  - Run `scripts/precommit.sh` voor commit hooks (ruff + mypy).
   - Houd duidelijke commit messages aan, bij voorkeur in de vorm van `feat: [description]` of `fix: [description]`.
 
 ### Best Practices

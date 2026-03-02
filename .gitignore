@@ -88,3 +88,18 @@ Thumbs.db
 *-prod.yaml
 *-accept.yaml
 *cluster*.yaml \ntest_results.json\n
+
+# Claude Code – device/user-specifiek (nooit committen)
+.claude/settings.local.json
+.claude/todos/
+.claude/debug/
+.claude/shell-snapshots/
+.claude/file-history/
+.claude/ide/
+.claude/backups/
+
+# Venv
+.venv/
+
+# Runtime logs (build-log hook output)
+logs/

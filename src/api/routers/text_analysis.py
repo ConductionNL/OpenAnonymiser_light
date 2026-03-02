@@ -1,8 +1,8 @@
 import logging
 import time
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
+from presidio_analyzer import RecognizerResult
 
 from src.api.config import settings
 from src.api.dtos import (
@@ -12,158 +12,100 @@ from src.api.dtos import (
     AnonymizeTextResponse,
     PIIEntity,
 )
-from src.api.services.text_analyzer import ModularTextAnalyzer
+from src.api.services import text_analyzer
 
 logger = logging.getLogger(__name__)
 text_analysis_router = APIRouter(tags=["text-analysis"])
 
 
-def create_pii_entities_from_results(results: list[dict]) -> list[PIIEntity]:
-    """Convert ModularTextAnalyzer results to PIIEntity DTOs."""
-    pii_entities = []
-    for result in results:
-        # Handle different score types (some models return empty string, others float)
-        score = result.get("score")
-        if score == "" or score is None:
-            score = None
-        elif isinstance(score, str) and score.strip() == "":
-            score = None
-
-        pii_entities.append(
-            PIIEntity(
-                entity_type=result["entity_type"],
-                text=result["text"],
-                start=result["start"],
-                end=result["end"],
-                score=score,
-            )
-        )
-    return pii_entities
+def _to_pii_entity(result: RecognizerResult, text: str) -> PIIEntity:
+    """Convert a Presidio RecognizerResult to a PIIEntity DTO."""
+    return PIIEntity(
+        entity_type=result.entity_type,
+        text=text[result.start : result.end],
+        start=result.start,
+        end=result.end,
+        score=result.score,
+    )
 
 
 @text_analysis_router.post("/analyze")
-async def analyze_text(
-    request: AnalyzeTextRequest,
-) -> AnalyzeTextResponse:
-    """Analyze text for PII entities using the specified NLP engine.
+async def analyze_text(request: AnalyzeTextRequest) -> AnalyzeTextResponse:
+    """Analyze text for PII entities.
 
-    This endpoint accepts a text string and returns detected PII entities
-    with their positions, types, and confidence scores (when available).
-
-    Args:
-        request: AnalyzeTextRequest containing text and analysis parameters
-
-    Returns:
-        AnalyzeTextResponse with detected PII entities and metadata
-
-    Raises:
-        HTTPException: On analysis failure or invalid parameters
+    Returns detected entities with their positions, types, and confidence scores.
+    Scores come directly from Presidio: 0.85 default for SpaCy NER,
+    pattern-specific floats for regex recognizers.
     """
     start_time = time.perf_counter()
-
     try:
-        # Initialize analyzer with specified engine or use default
-        nlp_engine = request.nlp_engine or settings.DEFAULT_NLP_ENGINE
-        analyzer = ModularTextAnalyzer(nlp_engine=nlp_engine)
-
-        # Perform analysis
-        entities_to_analyze = request.entities or settings.DEFAULT_ENTITIES
-        results = analyzer.analyze_text(
+        entities = request.entities or settings.DEFAULT_ENTITIES
+        results = text_analyzer.analyze(
             text=request.text,
-            entities=entities_to_analyze,
+            entities=entities,
             language=request.language,
         )
-
-        # Convert results to DTOs
-        pii_entities = create_pii_entities_from_results(results)
-
-        end_time = time.perf_counter()
-        processing_time_ms = int((end_time - start_time) * 1000)
+        pii_entities = [_to_pii_entity(r, request.text) for r in results]
+        processing_time_ms = int((time.perf_counter() - start_time) * 1000)
 
         logger.info(
-            f"Text analysis completed: {len(pii_entities)} entities found "
-            f"in {processing_time_ms}ms using {nlp_engine} engine"
+            "analyze: %d entities in %dms | lang=%s entities=%s",
+            len(pii_entities),
+            processing_time_ms,
+            request.language,
+            entities,
         )
-
         return AnalyzeTextResponse(
             pii_entities=pii_entities,
             text_length=len(request.text),
             processing_time_ms=processing_time_ms,
-            nlp_engine_used=nlp_engine,
+            language=request.language,
         )
-
     except Exception as e:
-        logger.error(f"Text analysis failed: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Text analysis failed: {str(e)}",
-        )
+        logger.error("analyze failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @text_analysis_router.post("/anonymize")
-async def anonymize_text(
-    request: AnonymizeTextRequest,
-) -> AnonymizeTextResponse:
-    """Anonymize PII entities in text using the specified strategy.
+async def anonymize_text(request: AnonymizeTextRequest) -> AnonymizeTextResponse:
+    """Anonymize PII entities in text.
 
-    This endpoint accepts a text string and returns the anonymized version
-    along with details about the entities that were found and anonymized.
-
-    Args:
-        request: AnonymizeTextRequest containing text and anonymization parameters
-
-    Returns:
-        AnonymizeTextResponse with original text, anonymized text, and entities found
-
-    Raises:
-        HTTPException: On anonymization failure or invalid parameters
+    Runs Presidio AnalyzerEngine then AnonymizerEngine with the requested strategy.
+    Returns original text, anonymized text, and the detected entities.
     """
     start_time = time.perf_counter()
-
     try:
-        # Initialize analyzer with specified engine or use default
-        nlp_engine = request.nlp_engine or settings.DEFAULT_NLP_ENGINE
-        analyzer = ModularTextAnalyzer(nlp_engine=nlp_engine)
+        entities = request.entities or settings.DEFAULT_ENTITIES
 
-        # First analyze to find entities
-        entities_to_analyze = request.entities or settings.DEFAULT_ENTITIES
-        analysis_results = analyzer.analyze_text(
+        analyzer_results = text_analyzer.analyze(
             text=request.text,
-            entities=entities_to_analyze,
+            entities=entities,
             language=request.language,
         )
-
-        # Then anonymize the text
-        anonymized_text = analyzer.anonymize_text(
+        engine_result = text_analyzer.anonymize(
             text=request.text,
-            entities=entities_to_analyze,
-            language=request.language,
+            analyzer_results=analyzer_results,
+            strategy=request.anonymization_strategy,
         )
 
-        # Convert analysis results to DTOs
-        entities_found = create_pii_entities_from_results(analysis_results)
-
-        end_time = time.perf_counter()
-        processing_time_ms = int((end_time - start_time) * 1000)
+        entities_found = [_to_pii_entity(r, request.text) for r in analyzer_results]
+        processing_time_ms = int((time.perf_counter() - start_time) * 1000)
 
         logger.info(
-            f"Text anonymization completed: {len(entities_found)} entities anonymized "
-            f"in {processing_time_ms}ms using {nlp_engine} engine and {request.anonymization_strategy} strategy"
+            "anonymize: %d entities in %dms | strategy=%s lang=%s",
+            len(entities_found),
+            processing_time_ms,
+            request.anonymization_strategy,
+            request.language,
         )
-
         return AnonymizeTextResponse(
             original_text=request.text,
-            anonymized_text=anonymized_text,
+            anonymized_text=engine_result.text,
             entities_found=entities_found,
             text_length=len(request.text),
             processing_time_ms=processing_time_ms,
-            nlp_engine_used=nlp_engine,
             anonymization_strategy=request.anonymization_strategy,
         )
-
     except Exception as e:
-        logger.error(f"Text anonymization failed: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Text anonymization failed: {str(e)}",
-        )
+        logger.error("anonymize failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

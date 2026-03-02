@@ -1,5 +1,0 @@
-apiVersion: v2
-name: openanonymiser
-version: 0.1.0
-description: OpenAnonymiser - Modulaire PII-detectie voor Nederlandse tekst
-appVersion: "1.0.0" 
