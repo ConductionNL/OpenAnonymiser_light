@@ -65,7 +65,7 @@ def setup_logging() -> None:
     afhankelijk van de configuratie. Logt naar 'app.log' en de console.
     """
     console_log_level = "DEBUG" if settings.DEBUG else "INFO"
-    log_dir = os.getenv("LOG_DIR", "logs")
+    log_dir = os.getenv("LOG_DIR", "/tmp/logs")
     os.makedirs(log_dir, exist_ok=True)
     logging.config.dictConfig(
         {
