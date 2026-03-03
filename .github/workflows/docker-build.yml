@@ -37,16 +37,19 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --group dev
+
+      - name: Download SpaCy model
+        run: uv run python -m spacy download nl_core_news_md
 
       - name: Start API
         run: |
-          uv run api.py &
+          DEFAULT_SPACY_MODEL=nl_core_news_md uv run api.py &
           echo "API_PID=$!" >> $GITHUB_ENV
           sleep 20
 
       - name: Run tests
-        run: pytest tests/ -q
+        run: uv run pytest tests/ -q
 
       - name: Stop API
         if: always()
