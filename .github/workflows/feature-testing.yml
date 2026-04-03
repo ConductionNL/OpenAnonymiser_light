@@ -34,16 +34,16 @@ jobs:
           uv run api.py &
           echo "API_PID=$!" >> $GITHUB_ENV
           
-          # Wait for API to be ready (with healthcheck loop, max 2 minutes)
-          for i in {1..120}; do
+          # Wait for API to be ready (with healthcheck loop, max 60 seconds)
+          for i in {1..60}; do
             if curl -s http://localhost:8080/api/v1/health | grep -q pong; then
               echo "API is ready"
               exit 0
             fi
-            echo "Waiting for API... ($i/120)"
+            echo "Waiting for API... ($i/60)"
             sleep 1
           done
-          echo "API failed to start within 120 seconds"
+          echo "API failed to start within 60 seconds"
           exit 1
 
       - name: Run test suite
