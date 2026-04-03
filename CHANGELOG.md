@@ -4,6 +4,13 @@ Alle belangrijke wijzigingen in dit project worden in dit bestand gedocumenteerd
 
 De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) en dit project maakt gebruik van [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-04-03
+
+### Changed
+- Presidio GLiNER Recognizer toegevoegd als module
+- Custom pattern recognizers (BSN/IBAN/etc.) op false gezet
+- Skip pattern recognizers tests
+
 ## [1.3.0] - 2026-03-02
 
 ### Removed

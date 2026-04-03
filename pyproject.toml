@@ -11,10 +11,13 @@ dependencies = [
     "presidio-anonymizer>=2.2.358",
     "nl_core_news_lg",
     "python-dotenv>=1.1.0",
+    "gliner>=0.1.13"
 ]
+
 authors = [
     { name = "Mark Westerweel", email = "mark.westerweel@conduction.nl" },
     { name = "Razo van Berkel", email = "razo.van.berkel@centric.eu" },
+    { name = "Nena Meijer", email = "nena.meijer@centric.eu" },
 ]
 
 [tool.uv.sources]

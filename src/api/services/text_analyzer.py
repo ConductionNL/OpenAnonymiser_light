@@ -55,6 +55,15 @@ def _build_analyzer() -> AnalyzerEngine:
     for recognizer in plugin_cfg.recognizers:
         registry.add_recognizer(recognizer)
 
+    # If GLiNER is enabled, remove spaCy recognizer to avoid NER coming from spaCy
+    has_gliner = any(
+        recognizer.__class__.__name__ == "GLiNERRecognizer"
+        for recognizer in plugin_cfg.recognizers
+    )
+    if has_gliner:
+        registry.remove_recognizer("SpacyRecognizer")
+
+
     engine = AnalyzerEngine(
         nlp_engine=nlp_engine,
         registry=registry,
