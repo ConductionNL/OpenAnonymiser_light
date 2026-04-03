@@ -3,7 +3,7 @@ FROM python:3.12.11-bookworm
 # use the latest version of uv from the official repository
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN groupadd -r presidio && useradd --no-log-init -r -g presidio presidio
+RUN groupadd -g 1000 presidio && useradd --no-log-init -u 1000 -g presidio presidio
 
 WORKDIR /app
 
