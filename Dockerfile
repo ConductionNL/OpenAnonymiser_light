@@ -20,14 +20,12 @@ USER presidio
 ENV UV_NO_CACHE=1
 # Pin HuggingFace cache to home dir (baked at build, read-only at runtime)
 ENV HF_HOME=/home/presidio/.cache/huggingface
-# Force offline mode at runtime — all models must be pre-downloaded at build
-ENV HF_HUB_OFFLINE=1
 # Torch cache needs write access at runtime; point to writable /tmp
 ENV TORCHINDUCTOR_CACHE_DIR=/tmp/torch_cache
 
 # resolve from uv.lock only, no dev dependencies
 RUN uv sync --frozen --no-dev --no-cache
- 
+
 # Pre-install Dutch SpaCy model used in production/staging (pin to SpaCy 3.8 series).
 # Use pip inside the venv and verify; force layer rebuild with ARG.
 ARG FORCE_REBUILD_MAIN="2026-04-03T00:00Z"
@@ -43,6 +41,9 @@ RUN .venv/bin/python -c "\
 from huggingface_hub import snapshot_download; \
 snapshot_download('urchade/gliner_multi_pii-v1'); \
 snapshot_download('microsoft/mdeberta-v3-base')"
+
+# Force offline mode at runtime — all models are now baked in
+ENV HF_HUB_OFFLINE=1
 
 COPY --chown=presidio:presidio src/api ./src/api
 COPY --chown=presidio:presidio api.py ./
