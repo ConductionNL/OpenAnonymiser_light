@@ -60,4 +60,4 @@ HEALTHCHECK \
     --retries=5 \
   CMD [".venv/bin/python", "scripts/healthcheck.py", "--port", "8080"]
 
-CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "2", "--env", "production", "--port", "8080"]
+CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "1", "--env", "production", "--port", "8080"]
