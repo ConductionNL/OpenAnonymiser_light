@@ -20,6 +20,8 @@ USER presidio
 ENV UV_NO_CACHE=1
 # Pin HuggingFace cache to home dir (baked at build, read-only at runtime)
 ENV HF_HOME=/home/presidio/.cache/huggingface
+# Force offline mode at runtime — all models must be pre-downloaded at build
+ENV HF_HUB_OFFLINE=1
 # Torch cache needs write access at runtime; point to writable /tmp
 ENV TORCHINDUCTOR_CACHE_DIR=/tmp/torch_cache
 
@@ -36,8 +38,11 @@ RUN set -eux; echo "$FORCE_REBUILD_MAIN" >/dev/null; \
     || .venv/bin/python -m spacy download nl_core_news_md; \
     .venv/bin/python -c "import spacy, importlib.metadata as m; spacy.load('nl_core_news_md'); print('nl_core_news_md installed'); [print(f'  {p}: {m.version(p)}') for p in ['presidio-analyzer','presidio-anonymizer','spacy']]"
 
-# Pre-download GLiNER model so it's baked into the image (read-only FS in K8s)
-RUN .venv/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('urchade/gliner_multi_pii-v1')"
+# Pre-download GLiNER model + its underlying tokenizer model (read-only FS in K8s)
+RUN .venv/bin/python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download('urchade/gliner_multi_pii-v1'); \
+snapshot_download('microsoft/mdeberta-v3-base')"
 
 COPY --chown=presidio:presidio src/api ./src/api
 COPY --chown=presidio:presidio api.py ./
