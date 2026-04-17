@@ -47,11 +47,11 @@ Leidend principe:
 - **Contextual** voegt *verificatie* toe op pattern-resultaten; declareert
   geen nieuwe entities, maar wél hogere precisie voor BSN/ID_NO.
 
-| Entity | classic | gliner | contextual |
+| Entity | classic | gpu | contextual |
 |---|---|---|---|
-| PERSON | SpaCy | GLiNER | SpaCy + verifier |
-| LOCATION | SpaCy | GLiNER | SpaCy + verifier |
-| ORGANIZATION | SpaCy | GLiNER | SpaCy + verifier |
+| PERSON | SpaCy | transformer-NER (GLiNER default) | SpaCy + verifier |
+| LOCATION | SpaCy | transformer-NER (GLiNER default) | SpaCy + verifier |
+| ORGANIZATION | SpaCy | transformer-NER (GLiNER default) | SpaCy + verifier |
 | PHONE_NUMBER | pattern | pattern | pattern |
 | EMAIL | pattern | pattern | pattern |
 | IBAN | pattern | pattern | pattern |
@@ -64,7 +64,7 @@ Leidend principe:
 | KVK_NUMBER | pattern | pattern | pattern |
 | LICENSE_PLATE | pattern | pattern | pattern |
 | IP_ADDRESS | pattern | pattern | pattern |
-| *custom-labels* | — | ✓ (via `entity_mapping`) | ✓ |
+| *custom-labels* | — | ✓ (via `entity_mapping` van de transformer-NER) | ✓ |
 
 \* *LLM-verifier* = LLM classificeert pattern-kandidaten binair
 (is-dit-een-BSN ja/nee op basis van context). Geen vrije extractie.

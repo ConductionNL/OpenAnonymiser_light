@@ -20,8 +20,15 @@ test-suite die ze onderling vergelijkt.
 
 ## What Changes
 
-- **Formaliseer drie flavors** — `classic` (SpaCy + regex), `gliner`
-  (GLiNER + regex), `contextual` (regex + transformer/LLM verifier).
+- **Formaliseer drie flavors** met elk een eigen deployment-model:
+  - `classic` (SpaCy + regex) — self-contained "in-het-doosje": sidecar,
+    Nextcloud-app, on-prem appliance. CPU-only, geen externe deps.
+  - `gpu` (transformer-NER + regex; GLiNER als default, swap-baar) —
+    managed SaaS met GPU. Engine-agnostische naam zodat GLiNER later
+    vervangen kan worden zonder hernoeming.
+  - `contextual` (regex/SpaCy kandidaten + transformer/LLM verifier) —
+    managed SaaS met externe afhankelijkheid (LLM-API of dedicated
+    GPU-model-server).
 - **Splits `plugins.yaml`** in drie flavor-configs in `src/api/config/`.
   Selectie via `PLUGINS_CONFIG` env-var (mechanisme bestaat al).
 - **Entity-contract per flavor** — `ALL_SUPPORTED_ENTITIES` wordt
@@ -29,10 +36,11 @@ test-suite die ze onderling vergelijkt.
   entities buiten de flavor → 422 (huidige validatielogica, nieuw toegepast
   per flavor).
 - **Docker: één Dockerfile per flavor** (`Dockerfile.classic`,
-  `Dockerfile.gliner`, `Dockerfile.contextual`). Flavor-specifieke
+  `Dockerfile.gpu`, `Dockerfile.contextual`). Flavor-specifieke
   dependency-extras in `pyproject.toml`.
-- **CI-matrix**: CPU-runner test `classic` + `gliner`; GPU-runner (nightly of
-  on-demand) test `contextual` en GPU-`gliner`.
+- **CI-matrix**: CPU-runner test `classic` volledig en draait contract-tests
+  voor alle flavors; GPU-runner (nightly of on-demand) test `gpu` en
+  `contextual`.
 - **Gedeelde contract-tests** onder `tests/contract/` die tegen ELKE flavor
   draaien en dezelfde API-belofte afdwingen (DTO-shape, HTTP-codes,
   entity-validatie).
@@ -68,16 +76,16 @@ test-suite die ze onderling vergelijkt.
 - **Nieuwe files**:
   - `docs/architecture/flavors.md`, `docs/architecture/entity-contract.md`
     (al aangemaakt in deze branch)
-  - `src/api/config/plugins.classic.yaml`, `plugins.gliner.yaml`,
+  - `src/api/config/plugins.classic.yaml`, `plugins.gpu.yaml`,
     `plugins.contextual.yaml`
-  - `Dockerfile.classic`, `Dockerfile.gliner`, `Dockerfile.contextual`
+  - `Dockerfile.classic`, `Dockerfile.gpu`, `Dockerfile.contextual`
     (bestaande `Dockerfile` wordt vervangen of één ervan)
-  - `tests/contract/`, `tests/flavors/classic/`, `tests/flavors/gliner/`,
+  - `tests/contract/`, `tests/flavors/classic/`, `tests/flavors/gpu/`,
     `tests/flavors/contextual/`, `tests/golden/` (dataset + runner)
 - **Gewijzigde files**:
   - `pyproject.toml` — `[project.optional-dependencies]` voor `classic`,
-    `gliner`, `contextual`. Verplaatsing van `gliner>=0.1.13` uit de
-    default-dependencies.
+    `gpu`, `contextual`. Verplaatsing van `gliner>=0.1.13` uit de
+    default-dependencies naar `gpu`-extra.
   - `src/api/config.py` — `ALL_SUPPORTED_ENTITIES` wordt dynamisch uit
     plugin-config.
   - `src/api/dtos.py` — optioneel `recognizer`-veld in `PIIEntity`.
@@ -88,12 +96,20 @@ test-suite die ze onderling vergelijkt.
     verwijzingen naar flavor-keuze.
   - `CHANGELOG.md` — entry onder komende versie.
 - **Dependencies**:
-  - `gliner` wordt optional-extra (niet default meer).
-  - `transformers`, `torch` worden optional-extra onder `contextual`.
+  - `gliner` wordt optional-extra onder `gpu` (niet default meer).
+  - `transformers`, `torch` worden optional-extra onder `gpu` én
+    `contextual`.
   - Optioneel provider-extras (`openai`, `anthropic`) onder `contextual`.
 - **Resource-profiel productie**:
-  - `classic`: ~1Gi memory, 0.5–1 CPU — drastisch lichter dan huidige 4Gi.
-  - `gliner`: 2–4Gi (huidige staat).
-  - `contextual`: 4Gi+ of externe LLM-API-kosten.
+  - `classic`: ~1Gi memory, 0.5–1 CPU, geen GPU — drastisch lichter dan
+    huidige 4Gi. Geschikt voor Nextcloud-app / sidecar.
+  - `gpu`: 4Gi+, GPU **verplicht** voor productie-latency.
+  - `contextual`: 4Gi+ plus externe LLM-API-kosten of dedicated GPU-model-
+    server.
+- **De-facto branch→flavor-mapping vóór deze change:**
+  - `main` en `staging` draaien al `classic` (SpaCy + alle regex aan).
+  - `development` draait een incomplete `gpu` (GLiNER aan, regex uit —
+    mist vormvaste entities). Deze change herstelt dat door regex
+    expliciet in `plugins.gpu.yaml` aan te zetten.
 - **Version-discrepantie**: CHANGELOG zegt 1.4.0, `src/api/main.py:45` zegt
   1.3.0. Deze change synct dat naar 1.5.0 bij merge.

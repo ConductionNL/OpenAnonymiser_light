@@ -6,14 +6,19 @@ leest de actieve set uit `plugins.yaml`. De selectie gebeurt via env-var
 `PLUGINS_CONFIG`. Dit is feitelijk al een flavor-switch — hij wordt alleen
 niet zo gebruikt.
 
-De huidige `plugins.yaml` representeert *flavor 2*: GLiNER actief, alle
-pattern-recognizers disabled, geen transformer/LLM. De adapters voor
-transformer en LLM bestaan als lazy imports maar hebben geen actieve
-plugin-entry.
+De branch-state in HEAD bevestigt dat de flavor-splitsing de facto al
+bestaat, maar impliciet en niet gedocumenteerd:
+- `origin/main` en `origin/staging`: SpaCy + alle regex-patterns enabled,
+  geen GLiNER. = **classic**.
+- `origin/development`: GLiNER enabled, alle regex-patterns disabled, geen
+  transformer/LLM. = **incomplete gpu** (mist vormvaste entities).
 
-In de productie-omgeving is de memory-druk recent opgeschaald naar 4Gi met
-1 worker (zie commits `3f1bd76`, `01955c7`). Dat is een directe consequentie
-van "alles in één image".
+De adapters voor transformer en LLM bestaan als lazy imports maar hebben
+geen actieve plugin-entry.
+
+In de productie-omgeving (op development-tags) is de memory-druk recent
+opgeschaald naar 4Gi met 1 worker (zie commits `3f1bd76`, `01955c7`). Dat is
+een directe consequentie van GLiNER + mdeberta + SpaCy in één image draaien.
 
 Dit ontwerp formaliseert drie flavors, bouwt de test-infrastructuur die ze
 onderling bewaakt, en lost en-passant de versie-discrepantie tussen
@@ -41,17 +46,25 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
 
 ## Decisions
 
-### 1. Naamgeving: `classic / gliner / contextual`
+### 1. Naamgeving: `classic / gpu / contextual`
 
 - **Keuze:** deze drie labels.
-- **Reden:** `classic` past bij de "saaie-maar-auditbare" belofte; `gliner`
-  is engine-specifiek en eerlijk over de resource-kosten; `contextual`
-  beschrijft de toegevoegde waarde (context-verificatie) zonder "LLM" in
-  de naam te zetten (die term staat negatief in het externe overzicht).
-- **Alternatief:** `light / accurate / contextual`. Afgewezen omdat
-  "accurate" suggereert dat `classic` onnauwkeurig is — niet waar voor
-  pattern-entities.
-- **Open:** defenitieve keuze wordt bij review geconfirmeerd.
+- **Reden:**
+  - `classic` past bij de "saaie-maar-auditbare" belofte en bij het "in-het-
+    doosje"-deployment-profiel (sidecar, Nextcloud-app, on-prem appliance).
+  - `gpu` beschrijft het resource-profiel en is **engine-agnostisch** —
+    we willen GLiNER later kunnen vervangen door een Dutch-BERT-NER of een
+    andere transformer zonder opnieuw te hernoemen. De naam beschrijft wat
+    de operator moet leveren (een GPU), niet welk specifiek model er
+    toevallig draait.
+  - `contextual` beschrijft de toegevoegde waarde (context-verificatie)
+    zonder "LLM" in de naam te zetten (die term staat negatief in het
+    externe functioneel-overzicht).
+- **Alternatief overwogen:** `gliner` voor flavor 2. Afgewezen: koppelt
+  de naam aan één specifieke engine, maakt engine-swap rommelig.
+- **Alternatief overwogen:** `light / accurate / contextual`. Afgewezen
+  omdat "accurate" suggereert dat `classic` onnauwkeurig is — niet waar
+  voor pattern-entities.
 
 ### 2. Selectie-mechanisme: env-var `PLUGINS_CONFIG`
 
@@ -63,17 +76,23 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
 - **Alternatief:** request-parameter `flavor` in DTO. Afgewezen: forceert
   alle engines in één image, breekt audit-model.
 
-### 3. Deployment: drie losse Dockerfiles
+### 3. Deployment: drie losse Dockerfiles + drie deployment-modellen
 
-- **Keuze:** `Dockerfile.classic`, `Dockerfile.gliner`,
+- **Keuze:** `Dockerfile.classic`, `Dockerfile.gpu`,
   `Dockerfile.contextual`. Elke file bakt eigen model-assets + selecteert
   eigen `plugins.<flavor>.yaml`.
 - **Reden:** saaier, expliciet, auditbaar. Lezer hoeft geen `ARG`-ketens
   te volgen om te weten wat in de image zit.
-- **Alternatief:** één Dockerfile met `ARG FLAVOR`. Afgewezen om
-  bovenstaande redenen; past ook niet bij de CLAUDE.md-voorkeur voor
-  "boring, auditable".
-- **Consequentie:** drie CI-jobs voor images, drie Helm-values-presets.
+- **Per-flavor deployment-target:**
+  - `classic` — sidecar / Nextcloud-app / on-prem appliance / air-gapped.
+    Eén container, geen externe deps, CPU-only.
+  - `gpu` — managed SaaS op K8s met GPU-node-pool, of dedicated GPU-VM.
+    Geen externe deps behalve het model (pre-baked in image).
+  - `contextual` — managed SaaS met extra dependency-laag: externe LLM-API
+    (OpenAI / Anthropic / Azure) of eigen GPU-model-server. Vereist
+    secrets-management voor provider-credentials.
+- **Consequentie:** drie CI-jobs voor images, drie Helm-values-presets,
+  verschillende operationele runbooks per flavor.
 
 ### 4. Contextual-flavor: LLM/transformer als *verifier*, niet als
    *detector*
@@ -94,10 +113,11 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
 
 - **Contract-tests** (`tests/contract/`): draaien tegen elke flavor via
   parametrize. Asserteren: HTTP-codes, DTO-shapes, entity-validatie-logica,
-  anonymization-strategies.
+  anonymization-strategies. Deze tests hoeven geen echte engines op te
+  starten (plugin-loading + config-validatie), draaien dus op CPU.
 - **Per-flavor-tests** (`tests/flavors/<flavor>/`): engine-specifiek gedrag.
-  Bv. GLiNER entity-mapping correct, pattern-overlap-resolutie in `classic`,
-  verifier-confusion-matrix in `contextual`.
+  Bv. pattern-overlap-resolutie in `classic`, transformer-NER entity-
+  mapping in `gpu`, verifier-confusion-matrix in `contextual`.
 - **Golden-dataset-tests** (`tests/golden/`): vaste set Nederlandse
   voorbeeld-teksten met ground-truth annotaties. Elke flavor draait ertegen,
   output wordt vergeleken op gedeelde invarianten (elk regex-detect moet
@@ -105,8 +125,10 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
   bandbreedte).
 - **Reden:** voorkomt stille drift tussen flavors en maakt recall/precision-
   verschillen zichtbaar bij elke PR.
-- **Resource-consequentie:** CPU-runners draaien contract + classic + gliner-
-  CPU; GPU of nightly-runner draait contextual + gliner-GPU.
+- **Resource-consequentie:** CPU-runner draait contract-tests (alle flavors)
+  + `classic` engine-tests; GPU-runner (nightly of label-triggered) draait
+  `gpu` en `contextual` engine-tests. `contextual` gebruikt een mock-LLM-
+  provider in unit-tests en echte provider alleen in nightly.
 
 ### 6. Entity-contract in code, niet alleen in docs
 
@@ -137,10 +159,14 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
 - **Risk: contextual-verifier is traag.** LLM-call per kandidaat kan
   p95-latency opblazen. → Mitigatie: verifier is opt-in per entity-type
   (alleen BSN/ID_NO default), batch-calls waar mogelijk.
-- **Risk: `gliner` als current-default betekent dat `classic` qua recall
-  zwakker zal ogen.** Dev-teams die nu werken verwachten GLiNER-output. →
-  Mitigatie: default dev-compose draait `gliner`, productie-default wordt
-  bewust per klant gekozen op basis van use-case.
+- **Risk: main/staging draaien feitelijk al `classic`, development draait
+  een incomplete `gpu`.** Teams kunnen verschillend gedrag zien per branch.
+  → Mitigatie: maak de mapping expliciet in `plugins.<flavor>.yaml`-files
+  en documenteer branch→flavor-default in `docs/04-deployment.md`.
+- **Risk: transformer-engine-swap in de `gpu`-flavor.** Als we GLiNER
+  vervangen door Dutch-BERT-NER, verandert output-shape mogelijk. →
+  Mitigatie: `plugins.gpu.yaml` is de swap-point, golden-dataset-tests
+  vangen regressies op bij de swap.
 - **Trade-off: drie Dockerfiles betekent driedubbele onderhoudslast op
   base-image updates.** → Geaccepteerd; auditbaarheid weegt zwaarder.
 
@@ -154,7 +180,7 @@ CHANGELOG (1.4.0) en `main.py` (1.3.0) op.
    - `plugins.classic.yaml` (pattern-recognizers weer aanzetten, GLiNER uit).
    - `Dockerfile.classic` + CI-build + smoke-test.
    - Golden-dataset + contract-test-framework.
-   - `plugins.gliner.yaml` (huidige state onder nieuwe naam).
+   - `plugins.gpu.yaml` (development-state + regex-patterns weer aan).
    - `plugins.contextual.yaml` + verifier-adapter.
 4. Default van dev-compose kiezen (open vraag 3 uit flavors.md).
 5. Helm-chart-updates + deployment per omgeving.

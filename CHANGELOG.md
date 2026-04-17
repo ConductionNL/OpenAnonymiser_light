@@ -7,12 +7,13 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 ## [Unreleased]
 
 ### Added
-- `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gliner`, `contextual`)
+- `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gpu`, `contextual`) met per flavor een expliciet deployment-model (self-contained / SaaS / SaaS+externe-deps)
 - `docs/architecture/entity-contract.md` — entity-matrix per flavor als bron-van-waarheid
 - `openspec/changes/split-into-3-flavors/` — proposal, design, tasks voor drie-smaken-split (ter review)
 
 ### Notes
 - Versie-discrepantie gesignaleerd: CHANGELOG staat op 1.4.0, `src/api/main.py:45` staat op 1.3.0 — wordt bij merge van de flavor-split gesynct naar 1.5.0.
+- De-facto branch→flavor-mapping gedocumenteerd: `main` en `staging` draaien al `classic`; `development` draait een incomplete `gpu` (regex uit). De flavor-split maakt deze mapping expliciet en repareert de gap op `development`.
 
 ## [1.4.0] - 2026-04-03
 

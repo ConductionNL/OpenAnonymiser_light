@@ -6,10 +6,10 @@
 
 ## 1. Plugin-configs splitsen
 
-- [ ] 1.1 `src/api/config/plugins.classic.yaml` — SpaCy NER + alle pattern recognizers enabled, GLiNER disabled
-- [ ] 1.2 `src/api/config/plugins.gliner.yaml` — GLiNER enabled, pattern recognizers ook enabled (anders geen EMAIL/IBAN/etc.)
-- [ ] 1.3 `src/api/config/plugins.contextual.yaml` — SpaCy + patterns + verifier-plugin (transformer of llm)
-- [ ] 1.4 Verplaats huidige `src/api/plugins.yaml` of maak deze een symlink/kopie van default flavor
+- [ ] 1.1 `src/api/config/plugins.classic.yaml` — SpaCy NER + alle pattern recognizers enabled, geen GLiNER. Komt overeen met huidige main/staging state.
+- [ ] 1.2 `src/api/config/plugins.gpu.yaml` — transformer-NER (GLiNER default) enabled, pattern recognizers **ook enabled** (anders geen EMAIL/IBAN/etc. — is de huidige gap op development-branch).
+- [ ] 1.3 `src/api/config/plugins.contextual.yaml` — SpaCy + patterns + verifier-plugin (transformer of llm) voor BSN/ID_NO
+- [ ] 1.4 Verplaats huidige `src/api/plugins.yaml` of maak deze een symlink/kopie van default flavor (voorstel default: `classic`)
 - [ ] 1.5 Update `plugin_loader.py` zodat default-pad flavor-aware is (fallback naar `classic` als `PLUGINS_CONFIG` niet gezet)
 
 ## 2. Code aanpassingen
@@ -24,24 +24,25 @@
 ## 3. Dependencies
 
 - [ ] 3.1 `pyproject.toml`: `gliner` uit default-dependencies halen
-- [ ] 3.2 `pyproject.toml`: `[project.optional-dependencies]` toevoegen — `classic = []`, `gliner = ["gliner>=0.1.13"]`, `contextual = ["transformers", "torch", ...]`
+- [ ] 3.2 `pyproject.toml`: `[project.optional-dependencies]` toevoegen — `classic = []`, `gpu = ["gliner>=0.1.13"]`, `contextual = ["transformers", "torch", ...]`
 - [ ] 3.3 `uv sync --extra classic` smoke-test — moet werken zonder gliner/torch
 - [ ] 3.4 Update `.env.example` — `PLUGINS_CONFIG`, `FLAVOR` env-vars documenteren
 
 ## 4. Docker
 
 - [ ] 4.1 `Dockerfile.classic` — SpaCy model, geen gliner, geen torch
-- [ ] 4.2 `Dockerfile.gliner` — GLiNER model pre-download (bestaand), SpaCy model
-- [ ] 4.3 `Dockerfile.contextual` — transformer model (mdeberta) pre-download of LLM-API credentials via env
+- [ ] 4.2 `Dockerfile.gpu` — transformer-NER model pre-download (GLiNER default), SpaCy model, CUDA-compatible base-image
+- [ ] 4.3 `Dockerfile.contextual` — transformer model (mdeberta) pre-download OF LLM-API credentials via env (provider-afhankelijk)
 - [ ] 4.4 Image-size meten per flavor, documenteren in `flavors.md` §6
 - [ ] 4.5 Bandit-scan per image (per CLAUDE.md regel 4): `bandit -r src/ -ll -q` na build
 
 ## 5. CI
 
-- [ ] 5.1 GitHub Actions workflow-matrix — drie jobs: `classic`, `gliner` (CPU)
-- [ ] 5.2 Nightly of label-triggered GPU-job voor `contextual` + `gliner-gpu`
-- [ ] 5.3 Image-build workflows per flavor (tag als `openanonymiser-<flavor>:<sha>`)
-- [ ] 5.4 CI-check: PR die `src/api/utils/patterns.py` of `plugins.*.yaml` wijzigt moet ook `docs/architecture/entity-contract.md` diff hebben (guard tegen drift)
+- [ ] 5.1 GitHub Actions workflow: contract-tests voor alle flavors op CPU-runner (geen echte engine-loading)
+- [ ] 5.2 GitHub Actions workflow: `classic` engine-tests op CPU-runner
+- [ ] 5.3 Nightly of label-triggered GPU-job voor `gpu` + `contextual` engine-tests
+- [ ] 5.4 Image-build workflows per flavor (tag als `openanonymiser-<flavor>:<sha>`)
+- [ ] 5.5 CI-check: PR die `src/api/utils/patterns.py` of `plugins.*.yaml` wijzigt moet ook `docs/architecture/entity-contract.md` diff hebben (guard tegen drift)
 
 ## 6. Tests — contract-laag
 
@@ -54,8 +55,8 @@
 ## 7. Tests — per flavor
 
 - [ ] 7.1 `tests/flavors/classic/` — pattern-overlap-resolutie, SpaCy NER-kwaliteit tegen mini-set
-- [ ] 7.2 `tests/flavors/gliner/` — GLiNER entity-mapping, custom-label-support
-- [ ] 7.3 `tests/flavors/contextual/` — verifier confusion-matrix tegen gelabelde BSN/niet-BSN-voorbeelden
+- [ ] 7.2 `tests/flavors/gpu/` — transformer-NER entity-mapping (GLiNER-specifiek nu, engine-agnostisch schrijven), custom-label-support
+- [ ] 7.3 `tests/flavors/contextual/` — verifier confusion-matrix tegen gelabelde BSN/niet-BSN-voorbeelden (met mock LLM-provider)
 
 ## 8. Tests — cross-flavor / golden dataset
 
