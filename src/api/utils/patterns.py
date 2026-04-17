@@ -15,7 +15,7 @@ class DutchPhoneNumberRecognizer(PatternRecognizer):
         supported_language: str = "nl",
     ) -> None:
         patterns = [
-            Pattern("DUTCH_PHONE", r"\b(?:0|(?:\+|00)31)[- ]?(?:\d[- ]?){9}\b", 0.6)
+            Pattern("DUTCH_PHONE", r"(?<!\w)(?:0|(?:\+|00)31)[- ]?(?:\d[- ]?){9}\b", 0.6)
         ]
         super().__init__(
             supported_entity="PHONE_NUMBER",
@@ -97,15 +97,31 @@ class DutchBSNRecognizer(PatternRecognizer):
             supported_language="nl",
         )
 
+    def validate_result(self, pattern_text: str) -> bool:
+        """Validate BSN checksum using the 11-check algorithm."""
+        return self._is_valid_bsn(pattern_text)
+
     def _is_valid_bsn(self, bsn: str) -> bool:
+        """Check if BSN passes 11-check: 9th digit must equal (sum % 11)."""
         digits = [int(d) for d in bsn if d.isdigit()]
-        return sum((9 - i) * d for i, d in enumerate(digits)) % 11 == 0
+        
+        if len(digits) != 9:
+            return False
+
+        total = sum((9 - i) * digits[i] for i in range(8))
+        expected_check = total % 11
+        return digits[8] == expected_check
 
 class DutchPostcodeRecognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
     ) -> None:
-        pattern = Pattern("NL_POSTCODE", r"\b\d{4}\s?[A-Z]{2}\b", 0.55)
+        # Negative lookbehind prevents matching year tails like "2025 IN" from dates
+        pattern = Pattern(
+            "NL_POSTCODE",
+            r"(?<!\d[-/.])\b(?!0{4})(?:[1-9]\d{3})\s?(?!SA|SD|SS)[A-HJ-NP-Z]{2}\b",
+            0.55,
+        )
         super().__init__(
             "POSTCODE",
             patterns=[pattern],
@@ -134,7 +150,7 @@ class DutchKvKRecognizer(PatternRecognizer):
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
     ) -> None:
         patterns = [
-            Pattern("KVK_8_DIGIT", r"\b\d{8}\b", 0.45)  # raise score with context
+            Pattern("KVK_8_DIGIT", r"(?<!\d[/ ])\b\d{8}\b", 0.45)  # raise score with context
         ]
         super().__init__(
             "KVK_NUMBER",
@@ -144,14 +160,24 @@ class DutchKvKRecognizer(PatternRecognizer):
         )
 
 
-# Nederlands kenteken (6 posities, diverse combinaties)
+# Nederlands kenteken — sidecodes 1-14
 _LICENSE_PATTERNS = [
-    r"[A-Z]{2}-\d{2}-\d{2}",
-    r"\d{2}-\d{2}-[A-Z]{2}",
-    r"\d{2}-[A-Z]{2}-\d{2}",
-    r"[A-Z]{2}-\d{2}-[A-Z]{2}",
-    r"[A-Z]{2}-[A-Z]{2}-\d{2}",
-    r"\d{2}-[A-Z]{2}-[A-Z]{2}",
+    # Sidecodes 1-6: elk segment 2 tekens
+    r"[A-Z]{2}-\d{2}-\d{2}",       # 1: XX-99-99
+    r"\d{2}-\d{2}-[A-Z]{2}",       # 2: 99-99-XX
+    r"\d{2}-[A-Z]{2}-\d{2}",       # 3: 99-XX-99
+    r"[A-Z]{2}-\d{2}-[A-Z]{2}",    # 4: XX-99-XX
+    r"[A-Z]{2}-[A-Z]{2}-\d{2}",    # 5: XX-XX-99
+    r"\d{2}-[A-Z]{2}-[A-Z]{2}",    # 6: 99-XX-XX
+    # Sidecodes 7-14: segmenten met 1 of 3 tekens
+    r"\d{2}-[A-Z]{3}-\d",          # 7: 99-XXX-9
+    r"\d-[A-Z]{3}-\d{2}",          # 8: 9-XXX-99
+    r"[A-Z]{2}-\d{3}-[A-Z]",       # 9: XX-999-X
+    r"[A-Z]-\d{3}-[A-Z]{2}",       # 10: X-999-XX
+    r"[A-Z]{3}-\d{2}-[A-Z]",       # 11: XXX-99-X
+    r"[A-Z]-\d{2}-[A-Z]{3}",       # 12: X-99-XXX
+    r"\d-[A-Z]{2}-\d{3}",          # 13: 9-XX-999
+    r"\d{3}-[A-Z]{2}-\d",          # 14: 999-XX-9
 ]
 
 
@@ -211,9 +237,10 @@ class DutchDateRecognizer(PatternRecognizer):
                 0.5,
             ),
             # dd mm yy (space-separated, 2-digit year)
+            # Negative lookahead prevents matching IP fragments like 10.10.10(.1)
             Pattern(
                 "DATE_DD_MM_YY",
-                r"\b(?:0?[1-9]|[12][0-9]|3[01])[\s/.-](?:0?[1-9]|1[0-2])[\s/.-]\d{2}\b",
+                r"\b(?:0?[1-9]|[12][0-9]|3[01])[\s/.-](?:0?[1-9]|1[0-2])[\s/.-]\d{2}(?!\.\d)\b",
                 0.45,
             ),
             # 1 september 2020 (spelled-out months in Dutch, case-insensitive)
@@ -304,11 +331,12 @@ class CaseNumberRecognizer(PatternRecognizer):
                 r"\b\d{16}\b",
                 0.4,
             ),
-            # UUID-stijl Zaak-ID (case-insensitive hex)
+            # UUID-stijl Zaak-ID — lage score want UUIDs worden ook voor
+            # device-IDs en andere niet-zaak entiteiten gebruikt
             Pattern(
                 "CASE_UUID",
                 r"(?i)\b[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\b",
-                0.6,
+                0.35,
             ),
             # Civiel: C/XX/NNNNNN (meer digits toegestaan)
             Pattern(
@@ -349,6 +377,41 @@ class CaseNumberRecognizer(PatternRecognizer):
         ]
         super().__init__(
             supported_entity="CASE_NO",
+            patterns=patterns,
+            context=context,  # type: ignore[arg-type]
+            supported_language=supported_language,
+        )
+
+
+class MACAddressRecognizer(PatternRecognizer):
+    """Herkenner voor MAC-adressen (IEEE 802).
+
+    Ondersteunt colon-separated (AA:BB:CC:DD:EE:FF),
+    dash-separated (AA-BB-CC-DD-EE-FF) en Cisco dot-notatie (AABB.CCDD.EEFF).
+    """
+
+    def __init__(
+        self, context: Optional[List[str]] = None, supported_language: str = "nl"
+    ) -> None:
+        patterns = [
+            Pattern(
+                "MAC_COLON",
+                r"\b(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b",
+                0.9,
+            ),
+            Pattern(
+                "MAC_DASH",
+                r"\b(?:[0-9A-Fa-f]{2}-){5}[0-9A-Fa-f]{2}\b",
+                0.9,
+            ),
+            Pattern(
+                "MAC_CISCO_DOT",
+                r"\b(?:[0-9A-Fa-f]{4}\.){2}[0-9A-Fa-f]{4}\b",
+                0.85,
+            ),
+        ]
+        super().__init__(
+            supported_entity="MAC_ADDRESS",
             patterns=patterns,
             context=context,  # type: ignore[arg-type]
             supported_language=supported_language,

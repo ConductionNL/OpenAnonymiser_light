@@ -68,4 +68,7 @@ dev = [
     "httpx>=0.28.1",
     "presidio-evaluator",
     "pytest>=8.4.1",
+    "matplotlib>=3.9.0",
+    "plotly>=5.24.0",
+    "seaborn>=0.13.0",
 ]

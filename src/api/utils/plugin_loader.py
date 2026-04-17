@@ -38,6 +38,7 @@ class PluginConfig:
     ner_config: dict[str, Any] = field(default_factory=dict)
     pattern_entity_types: frozenset[str] = field(default_factory=frozenset)
     ner_entity_types: frozenset[str] = field(default_factory=frozenset)
+    gliner_entity_types: frozenset[str] = field(default_factory=frozenset)
     language: str = "nl"
 
 
@@ -154,6 +155,7 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
     recognizers: list[EntityRecognizer] = []
     pattern_entity_types: set[str] = set()
     ner_entity_types: set[str] = set(ner_entities) if ner_enabled else set()
+    gliner_entity_types: set[str] = set()
 
     for plugin in raw.get("recognizers", []):
         if not plugin.get("enabled", True):
@@ -184,6 +186,8 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
             
             elif plugin_type == "gliner":
                 recognizer = _load_gliner_recognizer(plugin)
+                for et in set(plugin.get("entity_mapping", {}).values()):
+                    gliner_entity_types.add(et)
                 recognizers.append(recognizer)
                 logger.debug("GLiNER plugin geladen: %s", name)
 
@@ -206,5 +210,6 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
         ner_config=nlp_config,
         pattern_entity_types=frozenset(pattern_entity_types),
         ner_entity_types=frozenset(ner_entity_types),
+        gliner_entity_types=frozenset(gliner_entity_types),
         language=language,
     )
