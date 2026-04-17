@@ -4,6 +4,16 @@ Alle belangrijke wijzigingen in dit project worden in dit bestand gedocumenteerd
 
 De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) en dit project maakt gebruik van [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gliner`, `contextual`)
+- `docs/architecture/entity-contract.md` — entity-matrix per flavor als bron-van-waarheid
+- `openspec/changes/split-into-3-flavors/` — proposal, design, tasks voor drie-smaken-split (ter review)
+
+### Notes
+- Versie-discrepantie gesignaleerd: CHANGELOG staat op 1.4.0, `src/api/main.py:45` staat op 1.3.0 — wordt bij merge van de flavor-split gesynct naar 1.5.0.
+
 ## [1.4.0] - 2026-04-03
 
 ### Changed

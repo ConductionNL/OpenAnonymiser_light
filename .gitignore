@@ -81,8 +81,11 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 
-# Local env
+# Local env / secrets
 .env
+.env.*
+*.pem
+*.key
 
 # Deployment configurations with sensitive info
 *-prod.yaml
@@ -99,3 +102,6 @@ CLAUDE.md
 
 # Runtime logs (build-log hook output)
 logs/
+
+# Basic auth credentials (plain text htpasswd, never commit)
+basic-auth.auth
