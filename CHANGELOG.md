@@ -4,6 +4,19 @@ Alle belangrijke wijzigingen in dit project worden in dit bestand gedocumenteerd
 
 De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) en dit project maakt gebruik van [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-04-17
+
+### Added
+- Benchmark setup uitgebreid met 
+  - Multi entity zinnen dataset
+  - Visualisatie (confusion matrixen) 
+  - Genereer html reports (TP/FN/FP) voor benchmark resultaten
+  - Uitgebreide errors voor analyseren benchmark resultaten
+- Bug fixes in custom pattern recognizers
+- Presidio context enhancer logic toegevoegd (nog niet getest), kan disabled/enabled worden in `plugins.yaml`
+- GLiNER entiteiten meegenomen bij de logica voor het filteren van span-overlaps
+- Meer spaCy NER entiteiten toegevoegd om te herkennen
+
 ## [1.4.0] - 2026-04-03
 
 ### Changed
