@@ -81,8 +81,14 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 
-# Local env
+# Local env / secrets
 .env
+.env.*
+*.pem
+*.key
+
+# Basic auth credentials (plain text htpasswd, never commit)
+basic-auth.auth
 
 # Deployment configurations with sensitive info
 *-prod.yaml
