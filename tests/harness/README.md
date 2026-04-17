@@ -13,22 +13,35 @@ bestaande httpx-tests + een golden-dataset-runner ertegen.
 
 ## Snel draaien
 
-```bash
-# Classic (tegen een bestaande image of lokaal gebouwd)
-OPENANONYMISER_IMAGE=ghcr.io/conductionnl/openanonymiser:main \
-  docker compose -f tests/harness/compose.yaml up -d classic
-pytest tests/harness/test_option_1_classic.py -v
-docker compose -f tests/harness/compose.yaml down
+### Beide flavors tegelijk (aanbevolen)
 
-# GPU (development image)
-OPENANONYMISER_IMAGE=ghcr.io/conductionnl/openanonymiser:development \
-  docker compose -f tests/harness/compose.yaml up -d gpu
-pytest tests/harness/test_option_2_gpu.py -v
+Start classic (tag `:main`) én gpu (tag `:development`) parallel, run
+alle harness-tests in één pytest-aanroep:
+
+```bash
+OPENANONYMISER_IMAGE_CLASSIC=ghcr.io/conductionnl/openanonymiser:main \
+OPENANONYMISER_IMAGE_GPU=ghcr.io/conductionnl/openanonymiser:development \
+  docker compose -f tests/harness/compose.yaml up -d
+pytest tests/harness/ -v
 docker compose -f tests/harness/compose.yaml down
 ```
 
-De compose-file exposeert per service poort 8080 → 8081 (classic) en
-8082 (gpu), zodat beide parallel kunnen draaien als je dat wilt.
+Dit is de default-workflow: je krijgt per flavor een apart rapport in
+dezelfde run en ziet verschillen side-by-side.
+
+### Eén flavor tegelijk
+
+Handig als je alleen één image wil valideren of resources beperkt zijn:
+
+```bash
+OPENANONYMISER_IMAGE_CLASSIC=ghcr.io/conductionnl/openanonymiser:main \
+  docker compose -f tests/harness/compose.yaml up -d classic
+pytest tests/harness/test_option_1_classic.py -v
+docker compose -f tests/harness/compose.yaml down
+```
+
+Poort-mapping: classic → 8081, gpu → 8082. Tests die tegen een niet-
+draaiende container aan praten, skippen automatisch.
 
 ## Golden dataset
 

@@ -1,10 +1,18 @@
 # Per-flavor containers voor test-harness.
-# Gebruik: OPENANONYMISER_IMAGE=<tag> docker compose -f tests/harness/compose.yaml up -d <service>
-# Services kunnen parallel draaien (verschillende host-poorten).
+#
+# Gebruik — beide flavors tegelijk (aanbevolen):
+#   OPENANONYMISER_IMAGE_CLASSIC=ghcr.io/conductionnl/openanonymiser:main \
+#   OPENANONYMISER_IMAGE_GPU=ghcr.io/conductionnl/openanonymiser:development \
+#     docker compose -f tests/harness/compose.yaml up -d
+#
+# Gebruik — één flavor:
+#   OPENANONYMISER_IMAGE_CLASSIC=<tag> docker compose -f tests/harness/compose.yaml up -d classic
+#
+# Services draaien op verschillende host-poorten zodat ze parallel kunnen.
 
 services:
   classic:
-    image: "${OPENANONYMISER_IMAGE:-openanonymiser-light:classic}"
+    image: "${OPENANONYMISER_IMAGE_CLASSIC:-openanonymiser-light:classic}"
     container_name: openanonymiser-harness-classic
     ports:
       - "8081:8080"
@@ -20,7 +28,7 @@ services:
       start_period: 30s
 
   gpu:
-    image: "${OPENANONYMISER_IMAGE:-openanonymiser-light:gpu}"
+    image: "${OPENANONYMISER_IMAGE_GPU:-openanonymiser-light:gpu}"
     container_name: openanonymiser-harness-gpu
     ports:
       - "8082:8080"
