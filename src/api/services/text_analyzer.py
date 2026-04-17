@@ -68,6 +68,10 @@ def _build_analyzer() -> AnalyzerEngine:
     )
     if has_gliner:
         registry.remove_recognizer("SpacyRecognizer")
+    # Uncomment the next two lines to disable spaCyRecognizer when benchmarking patterns only
+    # else:
+    #     registry.remove_recognizer("SpacyRecognizer")
+    
 
     # Optional: Setup context-aware enhancement
     # Useful for boosting confidence of weak regex patterns using surrounding words
