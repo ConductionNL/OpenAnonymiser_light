@@ -3,7 +3,7 @@ FROM python:3.12.11-bookworm
 # use the latest version of uv from the official repository
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN groupadd -r presidio && useradd --no-log-init -r -g presidio presidio
+RUN groupadd -g 1000 presidio && useradd --no-log-init -u 1000 -g presidio presidio
 
 WORKDIR /app
 
@@ -18,19 +18,32 @@ USER presidio
 
 # Disable UV cache for runtime (read-only filesystem in K8s)
 ENV UV_NO_CACHE=1
+# Pin HuggingFace cache to home dir (baked at build, read-only at runtime)
+ENV HF_HOME=/home/presidio/.cache/huggingface
+# Torch cache needs write access at runtime; point to writable /tmp
+ENV TORCHINDUCTOR_CACHE_DIR=/tmp/torch_cache
 
 # resolve from uv.lock only, no dev dependencies
 RUN uv sync --frozen --no-dev --no-cache
- 
+
 # Pre-install Dutch SpaCy model used in production/staging (pin to SpaCy 3.8 series).
 # Use pip inside the venv and verify; force layer rebuild with ARG.
-ARG FORCE_REBUILD_MAIN="2026-03-02T00:00Z"
+ARG FORCE_REBUILD_MAIN="2026-04-03T00:00Z"
 RUN set -eux; echo "$FORCE_REBUILD_MAIN" >/dev/null; \
     .venv/bin/python -m ensurepip --upgrade; \
     .venv/bin/python -m pip install -q \
       "nl_core_news_md @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_md-3.8.0/nl_core_news_md-3.8.0-py3-none-any.whl" \
     || .venv/bin/python -m spacy download nl_core_news_md; \
     .venv/bin/python -c "import spacy, importlib.metadata as m; spacy.load('nl_core_news_md'); print('nl_core_news_md installed'); [print(f'  {p}: {m.version(p)}') for p in ['presidio-analyzer','presidio-anonymizer','spacy']]"
+
+# Pre-download GLiNER model + its underlying tokenizer model (read-only FS in K8s)
+RUN .venv/bin/python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download('urchade/gliner_multi_pii-v1'); \
+snapshot_download('microsoft/mdeberta-v3-base')"
+
+# Force offline mode at runtime — all models are now baked in
+ENV HF_HUB_OFFLINE=1
 
 COPY --chown=presidio:presidio src/api ./src/api
 COPY --chown=presidio:presidio api.py ./
@@ -47,4 +60,4 @@ HEALTHCHECK \
     --retries=5 \
   CMD [".venv/bin/python", "scripts/healthcheck.py", "--port", "8080"]
 
-CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "2", "--env", "production", "--port", "8080"]
+CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "1", "--env", "production", "--port", "8080"]

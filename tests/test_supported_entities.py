@@ -7,6 +7,7 @@ Run: pytest tests/test_supported_entities.py -v
 """
 
 import httpx
+import pytest
 
 
 def _detected_types(client: httpx.Client, text: str, entities: list[str]) -> set[str]:
@@ -70,12 +71,14 @@ class TestNEREntities:
 class TestPatternEntities:
     """Regex pattern recognizer entities."""
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_phone_mobile(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Bel ons op 0612345678.", ["PHONE_NUMBER"]
         )
         assert "PHONE_NUMBER" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_phone_international_0031(self, client: httpx.Client) -> None:
         # +31 after a space doesn't trigger \b (both non-word chars) — use 0031 form.
         types = _detected_types(
@@ -83,6 +86,7 @@ class TestPatternEntities:
         )
         assert "PHONE_NUMBER" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_email_detected(self, client: httpx.Client) -> None:
         texts = _detected_texts(
             client,
@@ -91,28 +95,33 @@ class TestPatternEntities:
         )
         assert "support@example.nl" in texts
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_iban_nl(self, client: httpx.Client) -> None:
         texts = _detected_texts(
             client, "IBAN: NL91ABNA0417164300.", ["IBAN"]
         )
         assert "NL91ABNA0417164300" in texts
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_iban_nl_spaced(self, client: httpx.Client) -> None:
         texts = _detected_texts(
             client, "Rekeningnummer: NL91 ABNA 0417 1643 00.", ["IBAN"]
         )
         assert any("NL91" in t for t in texts)
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_bsn_nine_digits(self, client: httpx.Client) -> None:
         types = _detected_types(client, "BSN: 111222333.", ["BSN"])
         assert "BSN" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_date_dd_mm_yyyy(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Geboortedatum: 15-03-1990.", ["DATE_TIME"]
         )
         assert "DATE_TIME" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_date_spelled_out(self, client: httpx.Client) -> None:
         types = _detected_types(
             client,
@@ -121,30 +130,35 @@ class TestPatternEntities:
         )
         assert "DATE_TIME" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_id_no_passport(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Paspoortnummer: AB1234561.", ["ID_NO"]
         )
         assert "ID_NO" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_vat_number(self, client: httpx.Client) -> None:
         texts = _detected_texts(
             client, "BTW-nummer: NL123456789B01.", ["VAT_NUMBER"]
         )
         assert "NL123456789B01" in texts
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_license_plate(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Kenteken AB-12-CD werd gesignaleerd.", ["LICENSE_PLATE"]
         )
         assert "LICENSE_PLATE" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_ip_address(self, client: httpx.Client) -> None:
         texts = _detected_texts(
             client, "Verbonden via IP 192.168.1.1.", ["IP_ADDRESS"]
         )
         assert "192.168.1.1" in texts
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_case_no_z_format(self, client: httpx.Client) -> None:
         types = _detected_types(
             client,
@@ -153,18 +167,21 @@ class TestPatternEntities:
         )
         assert "CASE_NO" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_case_no_awb_format(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Bezwaar AWB 21/12345 ingediend.", ["CASE_NO"]
         )
         assert "CASE_NO" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_drivers_license(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "Rijbewijsnummer: 1234567890.", ["DRIVERS_LICENSE"]
         )
         assert "DRIVERS_LICENSE" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_kvk_number(self, client: httpx.Client) -> None:
         types = _detected_types(
             client, "KvK-nummer: 12345678.", ["KVK_NUMBER"]
@@ -175,6 +192,7 @@ class TestPatternEntities:
 class TestEmailNotOrganization:
     """Regression: SpaCy NER must not tag emails as ORGANIZATION."""
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_no_organization_overlapping_email(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/analyze",
@@ -202,6 +220,7 @@ class TestEmailNotOrganization:
                     "SpaCy NER false positive should be filtered"
                 )
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_email_entity_is_detected(self, client: httpx.Client) -> None:
         """The email itself must still be detected as EMAIL."""
         r = client.post(
@@ -226,6 +245,7 @@ class TestPhoneVsDriversLicense:
     so both are returned. This is expected behavior.
     """
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_phone_number_is_detected(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/analyze",
@@ -239,6 +259,7 @@ class TestPhoneVsDriversLicense:
         types = {e["entity_type"] for e in r.json()["pii_entities"]}
         assert "PHONE_NUMBER" in types
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_phone_has_higher_score_than_drivers_license(
         self, client: httpx.Client
     ) -> None:

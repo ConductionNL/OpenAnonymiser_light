@@ -15,6 +15,13 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 ### Notes
 - Deze branch werkt parallel aan `feature/3-flavors-design` (docs) en `openspec/changes/split-into-3-flavors` (architectuur-proposal). Test-harness merget idealiter eerst en dient dan als validatie-gate voor de flavor-split-PR.
 
+## [1.4.0] - 2026-04-03
+
+### Changed
+- Presidio GLiNER Recognizer toegevoegd als module
+- Custom pattern recognizers (BSN/IBAN/etc.) op false gezet
+- Skip pattern recognizers tests
+
 ## [1.3.0] - 2026-03-02
 
 ### Removed

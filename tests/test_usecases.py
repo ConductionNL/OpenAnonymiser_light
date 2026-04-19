@@ -8,6 +8,7 @@ Run: pytest tests/test_usecases.py -v
 """
 
 import httpx
+import pytest
 
 # Reference text with all common Dutch PII types in realistic context.
 BURGERBRIEF = (
@@ -18,6 +19,7 @@ BURGERBRIEF = (
 )
 
 
+@pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
 def test_common_pii_detected_in_default_set(client: httpx.Client) -> None:
     """Pattern-based PII must all be found with the default entity set."""
     r = client.post(
@@ -46,6 +48,7 @@ def test_ner_types_present(client: httpx.Client) -> None:
     assert "PERSON" in found, "Expected PERSON (Jan Jansen) not found"
 
 
+@pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
 def test_anonymize_removes_all_common_pii(client: httpx.Client) -> None:
     """After replace-anonymization, original PII values must not appear in output."""
     r = client.post(
@@ -70,6 +73,7 @@ def test_anonymize_removes_all_common_pii(client: httpx.Client) -> None:
         )
 
 
+@pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
 def test_entities_found_in_anonymize_matches_analyze(client: httpx.Client) -> None:
     """entities_found in /anonymize must equal /analyze results for same input."""
     text = "Jan Jansen belt 0612345678 en mailt jan@example.com."
@@ -100,6 +104,7 @@ def test_entities_found_in_anonymize_matches_analyze(client: httpx.Client) -> No
     assert analyze_types == anonymize_types
 
 
+@pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
 def test_only_requested_entities_anonymized(client: httpx.Client) -> None:
     """When filtering to IBAN only, phone and email should survive in output."""
     text = "IBAN: NL91ABNA0417164300. Tel: 0612345678. Mail: jan@example.com."
@@ -119,6 +124,7 @@ def test_only_requested_entities_anonymized(client: httpx.Client) -> None:
     assert "jan@example.com" in anon
 
 
+@pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
 def test_all_anonymization_strategies_produce_different_output(
     client: httpx.Client,
 ) -> None:
