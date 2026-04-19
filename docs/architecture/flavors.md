@@ -202,6 +202,26 @@ Te beslissen vóór implementatie-start:
 8. **Transformer-swap-strategie voor gpu-flavor** — willen we meerdere
    transformer-engines ondersteunen (GLiNER én bv. Dutch-BERT-NER), of één
    default met config-override?
+9. **Deployment-target per flavor — herziening (2026-04-19)** — de huidige
+   §3 en `design.md §3` stellen *classic = Nextcloud/sidecar* en *gpu =
+   managed SaaS op Cyso K8s*. Een alternatieve mapping die beter matcht met
+   de bestaande realiteit is geopperd:
+   - `classic` (CPU-only, `:main`/`:acc`/`:dev`) → **Cyso clusters**
+     (dev/staging/prod). Dit is wat er feitelijk al draait; de flavor-split
+     formaliseert het.
+   - `gpu` → **niet naar Cyso** (geen GPU-nodes, ~75s/call op CPU =
+     onbruikbaar). Aparte GPU-host / managed GPU-cluster met eigen runbook.
+   - `contextual` → **in-Nextcloud** (sidecar/app release-artefact),
+     buiten Cyso.
+
+   Onder deze mapping swappen classic en contextual van plek t.o.v. de
+   huidige §3. Strategisch kader: "meerdere publish-flows nu; na ~6 maanden
+   resteert één productief flavor" — dus investeer niet in drie volledige
+   infra-pipelines tegelijk. Classic CI blokkerend op PR-merge; gpu +
+   contextual als losse/nachtelijke builds met eigen triggers.
+
+   **Te beslissen:** bevestigen → §3, `design.md §3`, en §4 herschrijven om
+   deze mapping weer te geven.
 
 ## 9. Relatie tot andere documenten
 
