@@ -15,6 +15,19 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 - Versie-discrepantie gesignaleerd: CHANGELOG staat op 1.4.0, `src/api/main.py:45` staat op 1.3.0 — wordt bij merge van de flavor-split gesynct naar 1.5.0.
 - De-facto branch→flavor-mapping gedocumenteerd: `main` en `staging` draaien al `classic`; `development` draait een incomplete `gpu` (regex uit). De flavor-split maakt deze mapping expliciet en repareert de gap op `development`.
 
+## [1.4.1] - 2026-04-17
+
+### Added
+- Benchmark setup uitgebreid met 
+  - Multi entity zinnen dataset
+  - Visualisatie (confusion matrixen) 
+  - Genereer html reports (TP/FN/FP) voor benchmark resultaten
+  - Uitgebreide errors voor analyseren benchmark resultaten
+- Bug fixes in custom pattern recognizers
+- Presidio context enhancer logic toegevoegd (nog niet getest), kan disabled/enabled worden in `plugins.yaml`
+- GLiNER entiteiten meegenomen bij de logica voor het filteren van span-overlaps
+- Meer spaCy NER entiteiten toegevoegd om te herkennen
+
 ## [1.4.0] - 2026-04-03
 
 ### Changed
