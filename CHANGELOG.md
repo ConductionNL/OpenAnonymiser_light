@@ -15,6 +15,19 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 ### Notes
 - Deze branch werkt parallel aan `feature/3-flavors-design` (docs) en `openspec/changes/split-into-3-flavors` (architectuur-proposal). Test-harness merget idealiter eerst en dient dan als validatie-gate voor de flavor-split-PR.
 
+## [1.4.1] - 2026-04-17
+
+### Added
+- Benchmark setup uitgebreid met 
+  - Multi entity zinnen dataset
+  - Visualisatie (confusion matrixen) 
+  - Genereer html reports (TP/FN/FP) voor benchmark resultaten
+  - Uitgebreide errors voor analyseren benchmark resultaten
+- Bug fixes in custom pattern recognizers
+- Presidio context enhancer logic toegevoegd (nog niet getest), kan disabled/enabled worden in `plugins.yaml`
+- GLiNER entiteiten meegenomen bij de logica voor het filteren van span-overlaps
+- Meer spaCy NER entiteiten toegevoegd om te herkennen
+
 ## [1.4.0] - 2026-04-03
 
 ### Changed
