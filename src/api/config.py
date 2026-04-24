@@ -24,7 +24,7 @@ class Settings:
         "EMAIL",
         "IBAN",
         "BSN",
-        "DATE_TIME",
+        "DATE",
     ]
 
     # Full set of entity types produced by all registered recognizers.
@@ -39,7 +39,7 @@ class Settings:
         "EMAIL",
         "IBAN",
         "BSN",
-        "DATE_TIME",
+        "DATE",
         "ID_NO",
         "DRIVERS_LICENSE",
         "CASE_NO",
