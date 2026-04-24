@@ -17,6 +17,7 @@ Exit codes:
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -458,6 +459,22 @@ def main(
     label_map_path: Path | None,
 ) -> None:
     """Evalueer PII-detectie precision/recall per entiteitstype."""
+    # Tee stdout to a buffer so we can save the full report to file
+    _orig_stdout = sys.stdout
+    _buf = io.StringIO()
+
+    class _TeeWriter:
+        def __init__(self, *writers):
+            self.writers = writers
+        def write(self, s):
+            for w in self.writers:
+                w.write(s)
+        def flush(self):
+            for w in self.writers:
+                w.flush()
+
+    sys.stdout = _TeeWriter(_orig_stdout, _buf)
+
     print(f"Dataset:      {data_path}")
     print(f"Drempels:     {thresholds_path}")
     print(f"Score min:    {score_threshold}  |  IoU min: {iou_threshold}")
@@ -561,10 +578,18 @@ def main(
     print()
     if not all_pass:
         print("Een of meer drempels niet gehaald.")
-        if fail_on_threshold:
-            sys.exit(1)
     else:
         print("Alle drempels gehaald.")
+
+    # Save full console output to eval_report.txt
+    sys.stdout = _orig_stdout
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_txt = output_dir / "eval_report.txt"
+    report_txt.write_text(_buf.getvalue(), encoding="utf-8")
+    print(f"\n  ✓ Report saved: {report_txt}")
+
+    if not all_pass and fail_on_threshold:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

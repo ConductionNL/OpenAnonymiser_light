@@ -1,0 +1,2228 @@
+[
+  {
+    "full_text": "Wesley Vergeer-Bleijenberg is veroordeeld op 08-03-1995.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Wesley Vergeer-Bleijenberg",
+        "start_position": 0,
+        "end_position": 26
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "08-03-1995",
+        "start_position": 45,
+        "end_position": 55
+      }
+    ]
+  },
+  {
+    "full_text": "Yfke de Vries-Bronder is veroordeeld op 11.05.2012.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Yfke de Vries-Bronder",
+        "start_position": 0,
+        "end_position": 21
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "11.05.2012",
+        "start_position": 40,
+        "end_position": 50
+      }
+    ]
+  },
+  {
+    "full_text": "427725288 is het BSN van de cliënt.",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "427725288",
+        "start_position": 0,
+        "end_position": 9
+      }
+    ]
+  },
+  {
+    "full_text": "740154692 is het BSN van de cliënt.",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "740154692",
+        "start_position": 0,
+        "end_position": 9
+      }
+    ]
+  },
+  {
+    "full_text": "NL79TRIO8333712059 is het rekeningnummer.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL79TRIO8333712059",
+        "start_position": 0,
+        "end_position": 18
+      }
+    ]
+  },
+  {
+    "full_text": "NL75TRIO8125960085 is het rekeningnummer.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL75TRIO8125960085",
+        "start_position": 0,
+        "end_position": 18
+      }
+    ]
+  },
+  {
+    "full_text": "kickperck@test.nl is het e-mailadres van de klant.",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "kickperck@test.nl",
+        "start_position": 0,
+        "end_position": 17
+      }
+    ]
+  },
+  {
+    "full_text": "fleur.schrant@test.nl is het e-mailadres van de klant.",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "fleur.schrant@test.nl",
+        "start_position": 0,
+        "end_position": 21
+      }
+    ]
+  },
+  {
+    "full_text": "OW-40-93 is het kenteken van de verdachte.",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "OW-40-93",
+        "start_position": 0,
+        "end_position": 8
+      }
+    ]
+  },
+  {
+    "full_text": "V-684-FG is het kenteken van de verdachte.",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "V-684-FG",
+        "start_position": 0,
+        "end_position": 8
+      }
+    ]
+  },
+  {
+    "full_text": "+31 6 71003892 is het telefoonnummer van de contactpersoon.",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 71003892",
+        "start_position": 0,
+        "end_position": 14
+      }
+    ]
+  },
+  {
+    "full_text": "+31 6 43206748 is het telefoonnummer van de contactpersoon.",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 43206748",
+        "start_position": 0,
+        "end_position": 14
+      }
+    ]
+  },
+  {
+    "full_text": "Het e-mailadres is niek.kremer@example.nl",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "niek.kremer@example.nl",
+        "start_position": 19,
+        "end_position": 41
+      }
+    ]
+  },
+  {
+    "full_text": "Het e-mailadres is yasmin_pasman@example.com",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "yasmin_pasman@example.com",
+        "start_position": 19,
+        "end_position": 44
+      }
+    ]
+  },
+  {
+    "full_text": "Neem contact op met +31 6 48791842",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 48791842",
+        "start_position": 20,
+        "end_position": 34
+      }
+    ]
+  },
+  {
+    "full_text": "Neem contact op met 06-82613974",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06-82613974",
+        "start_position": 20,
+        "end_position": 31
+      }
+    ]
+  },
+  {
+    "full_text": "De verdachte woont op Vredenburg 235b",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Vredenburg 235b",
+        "start_position": 22,
+        "end_position": 37
+      }
+    ]
+  },
+  {
+    "full_text": "De verdachte woont op Dorpslaan 148bis",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Dorpslaan 148bis",
+        "start_position": 22,
+        "end_position": 38
+      }
+    ]
+  },
+  {
+    "full_text": "Het BSN van de cliënt is 324563735",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "324563735",
+        "start_position": 25,
+        "end_position": 34
+      }
+    ]
+  },
+  {
+    "full_text": "Het BSN van de cliënt is 027513658",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "027513658",
+        "start_position": 25,
+        "end_position": 34
+      }
+    ]
+  },
+  {
+    "full_text": "Het kenteken is 8-QX-120",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "8-QX-120",
+        "start_position": 16,
+        "end_position": 24
+      }
+    ]
+  },
+  {
+    "full_text": "Het kenteken is 96-ZBS-4",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "96-ZBS-4",
+        "start_position": 16,
+        "end_position": 24
+      }
+    ]
+  },
+  {
+    "full_text": "De zaak staat geregistreerd als WOO-2020-254641",
+    "spans": [
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "WOO-2020-254641",
+        "start_position": 32,
+        "end_position": 47
+      }
+    ]
+  },
+  {
+    "full_text": "De zaak staat geregistreerd als 49/551971-40",
+    "spans": [
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "49/551971-40",
+        "start_position": 32,
+        "end_position": 44
+      }
+    ]
+  },
+  {
+    "full_text": "BSN: 544415292.",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "544415292",
+        "start_position": 5,
+        "end_position": 14
+      }
+    ]
+  },
+  {
+    "full_text": "BSN: 204832196.",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "204832196",
+        "start_position": 5,
+        "end_position": 14
+      }
+    ]
+  },
+  {
+    "full_text": "IBAN: NL57INGB4453459774.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL57INGB4453459774",
+        "start_position": 6,
+        "end_position": 24
+      }
+    ]
+  },
+  {
+    "full_text": "IBAN: NL96BUNQ3719463153.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL96BUNQ3719463153",
+        "start_position": 6,
+        "end_position": 24
+      }
+    ]
+  },
+  {
+    "full_text": "E-mail: pim_nihoe@test.nl.",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "pim_nihoe@test.nl",
+        "start_position": 8,
+        "end_position": 25
+      }
+    ]
+  },
+  {
+    "full_text": "E-mail: jaydenvanboven@organisatie.nl.",
+    "spans": [
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "jaydenvanboven@organisatie.nl",
+        "start_position": 8,
+        "end_position": 37
+      }
+    ]
+  },
+  {
+    "full_text": "Naam: Ise Jacobs-de Jonge.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Ise Jacobs-de Jonge",
+        "start_position": 6,
+        "end_position": 25
+      }
+    ]
+  },
+  {
+    "full_text": "Naam: Daniël Aertsz.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Daniël Aertsz",
+        "start_position": 6,
+        "end_position": 19
+      }
+    ]
+  },
+  {
+    "full_text": "Adres: Havenweg 410-2, 6881DJ Gouda.",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Havenweg 410-2",
+        "start_position": 7,
+        "end_position": 21
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "6881DJ",
+        "start_position": 23,
+        "end_position": 29
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Gouda",
+        "start_position": 30,
+        "end_position": 35
+      }
+    ]
+  },
+  {
+    "full_text": "Adres: Marktstraat 214-2, 5178NE Beverwijk.",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Marktstraat 214-2",
+        "start_position": 7,
+        "end_position": 24
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "5178NE",
+        "start_position": 26,
+        "end_position": 32
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Beverwijk",
+        "start_position": 33,
+        "end_position": 42
+      }
+    ]
+  },
+  {
+    "full_text": "KvK: 92730189.",
+    "spans": [
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "92730189",
+        "start_position": 5,
+        "end_position": 13
+      }
+    ]
+  },
+  {
+    "full_text": "KvK: 55287224.",
+    "spans": [
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "55287224",
+        "start_position": 5,
+        "end_position": 13
+      }
+    ]
+  },
+  {
+    "full_text": "In het dossier van Myrthe Kuijpers, BSN 601525504, woonachtig Hoofdstraat 241, 9083UK Tilburg, werkzaam bij Jorrisen B.V. (KvK 21823882, BTW NL030732681B77), bereikbaar op 06 15441724 en arieblokland@bedrijf.nl, met IBAN NL71RABO9735306082, is op 2003-06-19 een melding gedaan over kenteken W-367-VE in zaak Z-2023-129410.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Myrthe Kuijpers",
+        "start_position": 19,
+        "end_position": 34
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "601525504",
+        "start_position": 40,
+        "end_position": 49
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Hoofdstraat 241",
+        "start_position": 62,
+        "end_position": 77
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "9083UK",
+        "start_position": 79,
+        "end_position": 85
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Tilburg",
+        "start_position": 86,
+        "end_position": 93
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Jorrisen B.V.",
+        "start_position": 108,
+        "end_position": 121
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "21823882",
+        "start_position": 127,
+        "end_position": 135
+      },
+      {
+        "entity_type": "VAT_NUMBER",
+        "entity_value": "NL030732681B77",
+        "start_position": 141,
+        "end_position": 155
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06 15441724",
+        "start_position": 172,
+        "end_position": 183
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "arieblokland@bedrijf.nl",
+        "start_position": 187,
+        "end_position": 210
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL71RABO9735306082",
+        "start_position": 221,
+        "end_position": 239
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "2003-06-19",
+        "start_position": 247,
+        "end_position": 257
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "W-367-VE",
+        "start_position": 291,
+        "end_position": 299
+      },
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "Z-2023-129410",
+        "start_position": 308,
+        "end_position": 321
+      }
+    ]
+  },
+  {
+    "full_text": "In het dossier van Lauren Adriaense, BSN 290153955, woonachtig Vredenburg 40-2, 3873TR Middelburg, werkzaam bij Heineken (KvK 21848719, BTW NL175202925B40), bereikbaar op +31 45 7053318 en benjaminbrumleve@intranet.local, met IBAN NL55BUNQ0033458398, is op 14-06-2012 een melding gedaan over kenteken U-904-ZB in zaak 200.86611.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Lauren Adriaense",
+        "start_position": 19,
+        "end_position": 35
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "290153955",
+        "start_position": 41,
+        "end_position": 50
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Vredenburg 40-2",
+        "start_position": 63,
+        "end_position": 78
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "3873TR",
+        "start_position": 80,
+        "end_position": 86
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Middelburg",
+        "start_position": 87,
+        "end_position": 97
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Heineken",
+        "start_position": 112,
+        "end_position": 120
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "21848719",
+        "start_position": 126,
+        "end_position": 134
+      },
+      {
+        "entity_type": "VAT_NUMBER",
+        "entity_value": "NL175202925B40",
+        "start_position": 140,
+        "end_position": 154
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 45 7053318",
+        "start_position": 171,
+        "end_position": 185
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "benjaminbrumleve@intranet.local",
+        "start_position": 189,
+        "end_position": 220
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL55BUNQ0033458398",
+        "start_position": 231,
+        "end_position": 249
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "14-06-2012",
+        "start_position": 257,
+        "end_position": 267
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "U-904-ZB",
+        "start_position": 301,
+        "end_position": 309
+      },
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "200.86611",
+        "start_position": 318,
+        "end_position": 327
+      }
+    ]
+  },
+  {
+    "full_text": "Maurits Joosten\nWilhelminastraat 155\n6070XX Eindhoven\nE-mail: lize.keijser@example.com\nTelefoon: 06 18760724",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Maurits Joosten",
+        "start_position": 0,
+        "end_position": 15
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Wilhelminastraat 155",
+        "start_position": 16,
+        "end_position": 36
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "6070XX",
+        "start_position": 37,
+        "end_position": 43
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Eindhoven",
+        "start_position": 44,
+        "end_position": 53
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "lize.keijser@example.com",
+        "start_position": 62,
+        "end_position": 86
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06 18760724",
+        "start_position": 97,
+        "end_position": 108
+      }
+    ]
+  },
+  {
+    "full_text": "Phileine Blonk\nHerengracht 451-2\n2979 NK Harderwijk\nE-mail: sten.vanegisheim@gmail.com\nTelefoon: 0671126322",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Phileine Blonk",
+        "start_position": 0,
+        "end_position": 14
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Herengracht 451-2",
+        "start_position": 15,
+        "end_position": 32
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "2979 NK",
+        "start_position": 33,
+        "end_position": 40
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Harderwijk",
+        "start_position": 41,
+        "end_position": 51
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "sten.vanegisheim@gmail.com",
+        "start_position": 60,
+        "end_position": 86
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "0671126322",
+        "start_position": 97,
+        "end_position": 107
+      }
+    ]
+  },
+  {
+    "full_text": "Gegevens:\nNaam: Mirthe Post\nBSN: 453727943\nAdres: Nieuwstraat 71\n4105 TN Venlo",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Mirthe Post",
+        "start_position": 16,
+        "end_position": 27
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "453727943",
+        "start_position": 33,
+        "end_position": 42
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Nieuwstraat 71",
+        "start_position": 50,
+        "end_position": 64
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "4105 TN",
+        "start_position": 65,
+        "end_position": 72
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Venlo",
+        "start_position": 73,
+        "end_position": 78
+      }
+    ]
+  },
+  {
+    "full_text": "Gegevens:\nNaam: Joep van de Velde\nBSN: 664384894\nAdres: Keizersgracht 212\n3024ST Deventer",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Joep van de Velde",
+        "start_position": 16,
+        "end_position": 33
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "664384894",
+        "start_position": 39,
+        "end_position": 48
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Keizersgracht 212",
+        "start_position": 56,
+        "end_position": 73
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "3024ST",
+        "start_position": 74,
+        "end_position": 80
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Deventer",
+        "start_position": 81,
+        "end_position": 89
+      }
+    ]
+  },
+  {
+    "full_text": "Factuuradres:\nUniversiteit Twente\nWilhelminastraat 136\n2402 ZA Lelystad\nKvK: 44592279",
+    "spans": [
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Universiteit Twente",
+        "start_position": 14,
+        "end_position": 33
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Wilhelminastraat 136",
+        "start_position": 34,
+        "end_position": 54
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "2402 ZA",
+        "start_position": 55,
+        "end_position": 62
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Lelystad",
+        "start_position": 63,
+        "end_position": 71
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "44592279",
+        "start_position": 77,
+        "end_position": 85
+      }
+    ]
+  },
+  {
+    "full_text": "Factuuradres:\nAhold Delhaize\nHavenweg 493b\n5207FW Ede\nKvK: 94323143",
+    "spans": [
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Ahold Delhaize",
+        "start_position": 14,
+        "end_position": 28
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Havenweg 493b",
+        "start_position": 29,
+        "end_position": 42
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "5207FW",
+        "start_position": 43,
+        "end_position": 49
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Ede",
+        "start_position": 50,
+        "end_position": 53
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "94323143",
+        "start_position": 59,
+        "end_position": 67
+      }
+    ]
+  },
+  {
+    "full_text": "De verdachte (Mads de Werd-Duivenvoorden) woont in Helmond.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Mads de Werd-Duivenvoorden",
+        "start_position": 14,
+        "end_position": 40
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Helmond",
+        "start_position": 51,
+        "end_position": 58
+      }
+    ]
+  },
+  {
+    "full_text": "De verdachte (Joël Wever) woont in Venlo.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Joël Wever",
+        "start_position": 14,
+        "end_position": 24
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Venlo",
+        "start_position": 35,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "Betaal naar \"NL73ABNA5901285472\" vóór 16 mei 2024.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL73ABNA5901285472",
+        "start_position": 13,
+        "end_position": 31
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "16 mei 2024",
+        "start_position": 38,
+        "end_position": 49
+      }
+    ]
+  },
+  {
+    "full_text": "Betaal naar \"NL49ABNA9037979625\" vóór 21 oktober 2007.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL49ABNA9037979625",
+        "start_position": 13,
+        "end_position": 31
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "21 oktober 2007",
+        "start_position": 38,
+        "end_position": 53
+      }
+    ]
+  },
+  {
+    "full_text": "Bedrijf [Gerritse V.O.F.] heeft KvK-nummer [97932798].",
+    "spans": [
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Gerritse V.O.F.",
+        "start_position": 9,
+        "end_position": 24
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "97932798",
+        "start_position": 44,
+        "end_position": 52
+      }
+    ]
+  },
+  {
+    "full_text": "Bedrijf [KPN] heeft KvK-nummer [54173664].",
+    "spans": [
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "KPN",
+        "start_position": 9,
+        "end_position": 12
+      },
+      {
+        "entity_type": "KVK_NUMBER",
+        "entity_value": "54173664",
+        "start_position": 32,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "Contact: (0031 6 59166450) of (thijs.vanegisheim@hotmail.com).",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "0031 6 59166450",
+        "start_position": 10,
+        "end_position": 25
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "thijs.vanegisheim@hotmail.com",
+        "start_position": 31,
+        "end_position": 60
+      }
+    ]
+  },
+  {
+    "full_text": "Contact: (+31 49 6494702) of (liam_vannederlotharingen@example.com).",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 49 6494702",
+        "start_position": 10,
+        "end_position": 24
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "liam_vannederlotharingen@example.com",
+        "start_position": 30,
+        "end_position": 66
+      }
+    ]
+  },
+  {
+    "full_text": "BSN van cliënt: \"226039481\".",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "226039481",
+        "start_position": 17,
+        "end_position": 26
+      }
+    ]
+  },
+  {
+    "full_text": "BSN van cliënt: \"495527415\".",
+    "spans": [
+      {
+        "entity_type": "BSN",
+        "entity_value": "495527415",
+        "start_position": 17,
+        "end_position": 26
+      }
+    ]
+  },
+  {
+    "full_text": "Esther de Roo, 157073841, NL17ABNA9170157072.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Esther de Roo",
+        "start_position": 0,
+        "end_position": 13
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "157073841",
+        "start_position": 15,
+        "end_position": 24
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL17ABNA9170157072",
+        "start_position": 26,
+        "end_position": 44
+      }
+    ]
+  },
+  {
+    "full_text": "Nathan van Rheineck-de Swart, 108331465, NL71INGB8118621183.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Nathan van Rheineck-de Swart",
+        "start_position": 0,
+        "end_position": 28
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "108331465",
+        "start_position": 30,
+        "end_position": 39
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL71INGB8118621183",
+        "start_position": 41,
+        "end_position": 59
+      }
+    ]
+  },
+  {
+    "full_text": "Adres: Raadhuisstraat 451-1 1896PU Hoorn, tel +31 6 89926712, mail selina_doornhem@example.nl.",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Raadhuisstraat 451-1",
+        "start_position": 7,
+        "end_position": 27
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "1896PU",
+        "start_position": 28,
+        "end_position": 34
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Hoorn",
+        "start_position": 35,
+        "end_position": 40
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 89926712",
+        "start_position": 46,
+        "end_position": 60
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "selina_doornhem@example.nl",
+        "start_position": 67,
+        "end_position": 93
+      }
+    ]
+  },
+  {
+    "full_text": "Adres: Nieuwstraat 381bis 2388 NR Helmond, tel +31 6 84001953, mail mette.rademaker@overheid.nl.",
+    "spans": [
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Nieuwstraat 381bis",
+        "start_position": 7,
+        "end_position": 25
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "2388 NR",
+        "start_position": 26,
+        "end_position": 33
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Helmond",
+        "start_position": 34,
+        "end_position": 41
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 84001953",
+        "start_position": 47,
+        "end_position": 61
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "mette.rademaker@overheid.nl",
+        "start_position": 68,
+        "end_position": 95
+      }
+    ]
+  },
+  {
+    "full_text": "2016-01-07 Sophia van der Avoirt Leeuwarden.",
+    "spans": [
+      {
+        "entity_type": "DATE",
+        "entity_value": "2016-01-07",
+        "start_position": 0,
+        "end_position": 10
+      },
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Sophia van der Avoirt",
+        "start_position": 11,
+        "end_position": 32
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Leeuwarden",
+        "start_position": 33,
+        "end_position": 43
+      }
+    ]
+  },
+  {
+    "full_text": "12-05-1992 Lindsey Bijlsma Leiden.",
+    "spans": [
+      {
+        "entity_type": "DATE",
+        "entity_value": "12-05-1992",
+        "start_position": 0,
+        "end_position": 10
+      },
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Lindsey Bijlsma",
+        "start_position": 11,
+        "end_position": 26
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Leiden",
+        "start_position": 27,
+        "end_position": 33
+      }
+    ]
+  },
+  {
+    "full_text": "Bel mij op 086 4233806 of op 06-50023216.",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "086 4233806",
+        "start_position": 11,
+        "end_position": 22
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06-50023216",
+        "start_position": 29,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "Bel mij op 06 29217897 of op 06 20359599.",
+    "spans": [
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06 29217897",
+        "start_position": 11,
+        "end_position": 22
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06 20359599",
+        "start_position": 29,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "De datums zijn 27.12.1991, 21.03.1959 en 19.10.2009.",
+    "spans": [
+      {
+        "entity_type": "DATE",
+        "entity_value": "27.12.1991",
+        "start_position": 15,
+        "end_position": 25
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "21.03.1959",
+        "start_position": 27,
+        "end_position": 37
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "19.10.2009",
+        "start_position": 41,
+        "end_position": 51
+      }
+    ]
+  },
+  {
+    "full_text": "De datums zijn 03/11/1972, 14 februari 1992 en 04/07/1964.",
+    "spans": [
+      {
+        "entity_type": "DATE",
+        "entity_value": "03/11/1972",
+        "start_position": 15,
+        "end_position": 25
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "14 februari 1992",
+        "start_position": 27,
+        "end_position": 43
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "04/07/1964",
+        "start_position": 47,
+        "end_position": 57
+      }
+    ]
+  },
+  {
+    "full_text": "Rekeningnummer: NL15ABNA2257192316. Alternatief: NL12INGB0437308741.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL15ABNA2257192316",
+        "start_position": 16,
+        "end_position": 34
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL12INGB0437308741",
+        "start_position": 49,
+        "end_position": 67
+      }
+    ]
+  },
+  {
+    "full_text": "Rekeningnummer: NL84ASNB7050931679. Alternatief: NL80KNAB1029923445.",
+    "spans": [
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL84ASNB7050931679",
+        "start_position": 16,
+        "end_position": 34
+      },
+      {
+        "entity_type": "IBAN",
+        "entity_value": "NL80KNAB1029923445",
+        "start_position": 49,
+        "end_position": 67
+      }
+    ]
+  },
+  {
+    "full_text": "Voertuigen: 13-QXJ-7, ZTZ-33-W, 6-BKL-97.",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "13-QXJ-7",
+        "start_position": 12,
+        "end_position": 20
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "ZTZ-33-W",
+        "start_position": 22,
+        "end_position": 30
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "6-BKL-97",
+        "start_position": 32,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "Voertuigen: 55-38-IJ, 9-TXH-22, 9-KTL-90.",
+    "spans": [
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "55-38-IJ",
+        "start_position": 12,
+        "end_position": 20
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "9-TXH-22",
+        "start_position": 22,
+        "end_position": 30
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "9-KTL-90",
+        "start_position": 32,
+        "end_position": 40
+      }
+    ]
+  },
+  {
+    "full_text": "Apparaten met MAC b5-59-d4-e9-2a-16, 9c-8c-39-09-96-8f en 6ce7.1d09.34ef.",
+    "spans": [
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "b5-59-d4-e9-2a-16",
+        "start_position": 18,
+        "end_position": 35
+      },
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "9c-8c-39-09-96-8f",
+        "start_position": 37,
+        "end_position": 54
+      },
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "6ce7.1d09.34ef",
+        "start_position": 58,
+        "end_position": 72
+      }
+    ]
+  },
+  {
+    "full_text": "Apparaten met MAC dd22.7fb6.59bb, 57-a4-52-40-f6-b4 en 63ca.deb4.7b8d.",
+    "spans": [
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "dd22.7fb6.59bb",
+        "start_position": 18,
+        "end_position": 32
+      },
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "57-a4-52-40-f6-b4",
+        "start_position": 34,
+        "end_position": 51
+      },
+      {
+        "entity_type": "MAC_ADDRESS",
+        "entity_value": "63ca.deb4.7b8d",
+        "start_position": 55,
+        "end_position": 69
+      }
+    ]
+  },
+  {
+    "full_text": "Verbinding vanaf 172.16.83.154 naar 10.253.247.170 geblokkeerd.",
+    "spans": [
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "172.16.83.154",
+        "start_position": 17,
+        "end_position": 30
+      },
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "10.253.247.170",
+        "start_position": 36,
+        "end_position": 50
+      }
+    ]
+  },
+  {
+    "full_text": "Verbinding vanaf 139.12.203.167 naar 192.168.54.161 geblokkeerd.",
+    "spans": [
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "139.12.203.167",
+        "start_position": 17,
+        "end_position": 31
+      },
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "192.168.54.161",
+        "start_position": 37,
+        "end_position": 51
+      }
+    ]
+  },
+  {
+    "full_text": "Server 31.241.0.174 is niet bereikbaar sinds 24.04.1998.",
+    "spans": [
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "31.241.0.174",
+        "start_position": 7,
+        "end_position": 19
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "24.04.1998",
+        "start_position": 45,
+        "end_position": 55
+      }
+    ]
+  },
+  {
+    "full_text": "Server 10.13.46.254 is niet bereikbaar sinds 22-08-2012.",
+    "spans": [
+      {
+        "entity_type": "IP_ADDRESS",
+        "entity_value": "10.13.46.254",
+        "start_position": 7,
+        "end_position": 19
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "22-08-2012",
+        "start_position": 45,
+        "end_position": 55
+      }
+    ]
+  },
+  {
+    "full_text": "Het rijbewijsnummer 2259711982 is verlopen op 18/04/1985.",
+    "spans": [
+      {
+        "entity_type": "DRIVERS_LICENSE",
+        "entity_value": "2259711982",
+        "start_position": 20,
+        "end_position": 30
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "18/04/1985",
+        "start_position": 46,
+        "end_position": 56
+      }
+    ]
+  },
+  {
+    "full_text": "Het rijbewijsnummer 8589131838 is verlopen op 3 januari 1991.",
+    "spans": [
+      {
+        "entity_type": "DRIVERS_LICENSE",
+        "entity_value": "8589131838",
+        "start_position": 20,
+        "end_position": 30
+      },
+      {
+        "entity_type": "DATE",
+        "entity_value": "3 januari 1991",
+        "start_position": 46,
+        "end_position": 60
+      }
+    ]
+  },
+  {
+    "full_text": "Bestuurder met rijbewijs 2340335139 reed in voertuig 51-73-OZ.",
+    "spans": [
+      {
+        "entity_type": "DRIVERS_LICENSE",
+        "entity_value": "2340335139",
+        "start_position": 25,
+        "end_position": 35
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "51-73-OZ",
+        "start_position": 53,
+        "end_position": 61
+      }
+    ]
+  },
+  {
+    "full_text": "Bestuurder met rijbewijs 4164916910 reed in voertuig EJ-279-F.",
+    "spans": [
+      {
+        "entity_type": "DRIVERS_LICENSE",
+        "entity_value": "4164916910",
+        "start_position": 25,
+        "end_position": 35
+      },
+      {
+        "entity_type": "LICENSE_PLATE",
+        "entity_value": "EJ-279-F",
+        "start_position": 53,
+        "end_position": 61
+      }
+    ]
+  },
+  {
+    "full_text": "Paspoort TAGUE0C06 of identiteitskaart WI7PN9S52.",
+    "spans": [
+      {
+        "entity_type": "ID_NO",
+        "entity_value": "TAGUE0C06",
+        "start_position": 9,
+        "end_position": 18
+      },
+      {
+        "entity_type": "ID_NO",
+        "entity_value": "WI7PN9S52",
+        "start_position": 39,
+        "end_position": 48
+      }
+    ]
+  },
+  {
+    "full_text": "Paspoort LTGKMVTW1 of identiteitskaart PZXPZC1W5.",
+    "spans": [
+      {
+        "entity_type": "ID_NO",
+        "entity_value": "LTGKMVTW1",
+        "start_position": 9,
+        "end_position": 18
+      },
+      {
+        "entity_type": "ID_NO",
+        "entity_value": "PZXPZC1W5",
+        "start_position": 39,
+        "end_position": 48
+      }
+    ]
+  },
+  {
+    "full_text": "Zaken: 17/916422-66 en HR 25/32664.",
+    "spans": [
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "17/916422-66",
+        "start_position": 7,
+        "end_position": 19
+      },
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "HR 25/32664",
+        "start_position": 23,
+        "end_position": 34
+      }
+    ]
+  },
+  {
+    "full_text": "Zaken: Z-2021-693738 en INT-2025-9946.",
+    "spans": [
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "Z-2021-693738",
+        "start_position": 7,
+        "end_position": 20
+      },
+      {
+        "entity_type": "CASE_NO",
+        "entity_value": "INT-2025-9946",
+        "start_position": 24,
+        "end_position": 37
+      }
+    ]
+  },
+  {
+    "full_text": "Patiënt Sofia Paillet-Schenk uit Vlaardingen heeft BSN 152354530.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Sofia Paillet-Schenk",
+        "start_position": 8,
+        "end_position": 28
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Vlaardingen",
+        "start_position": 33,
+        "end_position": 44
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "152354530",
+        "start_position": 55,
+        "end_position": 64
+      }
+    ]
+  },
+  {
+    "full_text": "Patiënt Mika Van Bragt uit Hilversum heeft BSN 100161108.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Mika Van Bragt",
+        "start_position": 8,
+        "end_position": 22
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Hilversum",
+        "start_position": 27,
+        "end_position": 36
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "100161108",
+        "start_position": 47,
+        "end_position": 56
+      }
+    ]
+  },
+  {
+    "full_text": "Medewerker Yinthe Haack werkt bij ING in Leiden.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Yinthe Haack",
+        "start_position": 11,
+        "end_position": 23
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "ING",
+        "start_position": 34,
+        "end_position": 37
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Leiden",
+        "start_position": 41,
+        "end_position": 47
+      }
+    ]
+  },
+  {
+    "full_text": "Medewerker Cornelis de Mol werkt bij Blonk V.O.F. in Beverwijk.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Cornelis de Mol",
+        "start_position": 11,
+        "end_position": 26
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Blonk V.O.F.",
+        "start_position": 37,
+        "end_position": 49
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Beverwijk",
+        "start_position": 53,
+        "end_position": 62
+      }
+    ]
+  },
+  {
+    "full_text": "Nienke de Pauw, Syrisch, is verhuisd naar Gouda.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Nienke de Pauw",
+        "start_position": 0,
+        "end_position": 14
+      },
+      {
+        "entity_type": "NORP",
+        "entity_value": "Syrisch",
+        "start_position": 16,
+        "end_position": 23
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Gouda",
+        "start_position": 42,
+        "end_position": 47
+      }
+    ]
+  },
+  {
+    "full_text": "Tirza Grondel, Turkse, is verhuisd naar Helmond.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Tirza Grondel",
+        "start_position": 0,
+        "end_position": 13
+      },
+      {
+        "entity_type": "NORP",
+        "entity_value": "Turkse",
+        "start_position": 15,
+        "end_position": 21
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Helmond",
+        "start_position": 40,
+        "end_position": 47
+      }
+    ]
+  },
+  {
+    "full_text": "De Joods Lotte van Leuven-Koeman woont in Zutphen en stemt op BIJ1.",
+    "spans": [
+      {
+        "entity_type": "NORP",
+        "entity_value": "Joods",
+        "start_position": 3,
+        "end_position": 8
+      },
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Lotte van Leuven-Koeman",
+        "start_position": 9,
+        "end_position": 32
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Zutphen",
+        "start_position": 42,
+        "end_position": 49
+      },
+      {
+        "entity_type": "POLITICAL_PARTY",
+        "entity_value": "BIJ1",
+        "start_position": 62,
+        "end_position": 66
+      }
+    ]
+  },
+  {
+    "full_text": "De christelijk Jens van Ochten woont in Rotterdam en stemt op GroenLinks-PvdA.",
+    "spans": [
+      {
+        "entity_type": "NORP",
+        "entity_value": "christelijk",
+        "start_position": 3,
+        "end_position": 14
+      },
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Jens van Ochten",
+        "start_position": 15,
+        "end_position": 30
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Rotterdam",
+        "start_position": 40,
+        "end_position": 49
+      },
+      {
+        "entity_type": "POLITICAL_PARTY",
+        "entity_value": "GroenLinks-PvdA",
+        "start_position": 62,
+        "end_position": 77
+      }
+    ]
+  },
+  {
+    "full_text": "Salaris van Ecrin Schuylenborch: 5354 euro bruto. Bonus: 760 euro.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Ecrin Schuylenborch",
+        "start_position": 12,
+        "end_position": 31
+      },
+      {
+        "entity_type": "INCOME",
+        "entity_value": "5354 euro bruto",
+        "start_position": 33,
+        "end_position": 48
+      },
+      {
+        "entity_type": "MONEY",
+        "entity_value": "760 euro",
+        "start_position": 57,
+        "end_position": 65
+      }
+    ]
+  },
+  {
+    "full_text": "Salaris van Vigo Zijlmans: 2139 euro bruto. Bonus: EUR 7512.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Vigo Zijlmans",
+        "start_position": 12,
+        "end_position": 25
+      },
+      {
+        "entity_type": "INCOME",
+        "entity_value": "2139 euro bruto",
+        "start_position": 27,
+        "end_position": 42
+      },
+      {
+        "entity_type": "MONEY",
+        "entity_value": "EUR 7512",
+        "start_position": 51,
+        "end_position": 59
+      }
+    ]
+  },
+  {
+    "full_text": "Daphne Winnrich heeft een WO farmacie en werkt bij Stichting van Noort.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Daphne Winnrich",
+        "start_position": 0,
+        "end_position": 15
+      },
+      {
+        "entity_type": "EDUCATION_LEVEL",
+        "entity_value": "WO farmacie",
+        "start_position": 26,
+        "end_position": 37
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Stichting van Noort",
+        "start_position": 51,
+        "end_position": 70
+      }
+    ]
+  },
+  {
+    "full_text": "Dylano Rietveld heeft een MBO-diploma Administratie en werkt bij Universiteit Twente.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Dylano Rietveld",
+        "start_position": 0,
+        "end_position": 15
+      },
+      {
+        "entity_type": "EDUCATION_LEVEL",
+        "entity_value": "MBO-diploma Administratie",
+        "start_position": 26,
+        "end_position": 51
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Universiteit Twente",
+        "start_position": 65,
+        "end_position": 84
+      }
+    ]
+  },
+  {
+    "full_text": "Ravi Velderman is lid van VVD in Leiden.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Ravi Velderman",
+        "start_position": 0,
+        "end_position": 14
+      },
+      {
+        "entity_type": "POLITICAL_PARTY",
+        "entity_value": "VVD",
+        "start_position": 26,
+        "end_position": 29
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Leiden",
+        "start_position": 33,
+        "end_position": 39
+      }
+    ]
+  },
+  {
+    "full_text": "Jade Brizee is lid van CDA in Groningen.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Jade Brizee",
+        "start_position": 0,
+        "end_position": 11
+      },
+      {
+        "entity_type": "POLITICAL_PARTY",
+        "entity_value": "CDA",
+        "start_position": 23,
+        "end_position": 26
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Groningen",
+        "start_position": 30,
+        "end_position": 39
+      }
+    ]
+  },
+  {
+    "full_text": "Op Twitter is Lisanne van Dommelen te vinden als @beau_van'triet.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Lisanne van Dommelen",
+        "start_position": 14,
+        "end_position": 34
+      },
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@beau_van'triet",
+        "start_position": 49,
+        "end_position": 64
+      }
+    ]
+  },
+  {
+    "full_text": "Op Twitter is Ize Meis te vinden als @pepijnhulshouts.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Ize Meis",
+        "start_position": 14,
+        "end_position": 22
+      },
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@pepijnhulshouts",
+        "start_position": 37,
+        "end_position": 53
+      }
+    ]
+  },
+  {
+    "full_text": "Volg @hidde_haring_nl voor updates van Wilson B.V..",
+    "spans": [
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@hidde_haring_nl",
+        "start_position": 5,
+        "end_position": 21
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "Wilson B.V.",
+        "start_position": 39,
+        "end_position": 50
+      }
+    ]
+  },
+  {
+    "full_text": "Volg @jayson_boogaerts94 voor updates van KPN.",
+    "spans": [
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@jayson_boogaerts94",
+        "start_position": 5,
+        "end_position": 24
+      },
+      {
+        "entity_type": "ORGANIZATION",
+        "entity_value": "KPN",
+        "start_position": 42,
+        "end_position": 45
+      }
+    ]
+  },
+  {
+    "full_text": "Klantgegevens: Lize de Vries (@victor_elberts11), Surinaams, VMBO-diploma. Woont Kerkstraat 130-1, 2841AR Dordrecht. BSN 401418492, tel 06-99091559, e-mail frederique.elsenaar@example.com.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Lize de Vries",
+        "start_position": 15,
+        "end_position": 28
+      },
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@victor_elberts11",
+        "start_position": 30,
+        "end_position": 47
+      },
+      {
+        "entity_type": "NORP",
+        "entity_value": "Surinaams",
+        "start_position": 50,
+        "end_position": 59
+      },
+      {
+        "entity_type": "EDUCATION_LEVEL",
+        "entity_value": "VMBO-diploma",
+        "start_position": 61,
+        "end_position": 73
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Kerkstraat 130-1",
+        "start_position": 81,
+        "end_position": 97
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "2841AR",
+        "start_position": 99,
+        "end_position": 105
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Dordrecht",
+        "start_position": 106,
+        "end_position": 115
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "401418492",
+        "start_position": 121,
+        "end_position": 130
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "06-99091559",
+        "start_position": 136,
+        "end_position": 147
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "frederique.elsenaar@example.com",
+        "start_position": 156,
+        "end_position": 187
+      }
+    ]
+  },
+  {
+    "full_text": "Klantgegevens: Linn Jacquot (@jelte_keijser_nl), Nederlands, HBO Bedrijfskunde. Woont Ringdijk 484, 6349 NN Zoetermeer. BSN 474652191, tel +31 6 76817851, e-mail julian.koning@example.nl.",
+    "spans": [
+      {
+        "entity_type": "PERSON",
+        "entity_value": "Linn Jacquot",
+        "start_position": 15,
+        "end_position": 27
+      },
+      {
+        "entity_type": "SOCIAL_MEDIA",
+        "entity_value": "@jelte_keijser_nl",
+        "start_position": 29,
+        "end_position": 46
+      },
+      {
+        "entity_type": "NORP",
+        "entity_value": "Nederlands",
+        "start_position": 49,
+        "end_position": 59
+      },
+      {
+        "entity_type": "EDUCATION_LEVEL",
+        "entity_value": "HBO Bedrijfskunde",
+        "start_position": 61,
+        "end_position": 78
+      },
+      {
+        "entity_type": "STREET_ADDRESS",
+        "entity_value": "Ringdijk 484",
+        "start_position": 86,
+        "end_position": 98
+      },
+      {
+        "entity_type": "POSTCODE",
+        "entity_value": "6349 NN",
+        "start_position": 100,
+        "end_position": 107
+      },
+      {
+        "entity_type": "LOCATION",
+        "entity_value": "Zoetermeer",
+        "start_position": 108,
+        "end_position": 118
+      },
+      {
+        "entity_type": "BSN",
+        "entity_value": "474652191",
+        "start_position": 124,
+        "end_position": 133
+      },
+      {
+        "entity_type": "PHONE_NUMBER",
+        "entity_value": "+31 6 76817851",
+        "start_position": 139,
+        "end_position": 153
+      },
+      {
+        "entity_type": "EMAIL",
+        "entity_value": "julian.koning@example.nl",
+        "start_position": 162,
+        "end_position": 186
+      }
+    ]
+  },
+  {
+    "full_text": "Artikelnummer 12345678 is niet meer leverbaar.",
+    "spans": []
+  },
+  {
+    "full_text": "Bestelnummer 87654321 is verwerkt op het magazijn.",
+    "spans": []
+  },
+  {
+    "full_text": "De barcode bevat het nummer 90123456 en is geldig.",
+    "spans": []
+  },
+  {
+    "full_text": "Factuurnummer 45678901 is verzonden naar de klant.",
+    "spans": []
+  },
+  {
+    "full_text": "Referentienummer 23456789 hoort bij deze aanvraag.",
+    "spans": []
+  },
+  {
+    "full_text": "Ordernummer 1234567890 is bevestigd per e-mail.",
+    "spans": []
+  },
+  {
+    "full_text": "Het transactienummer 9876543210 staat in de administratie.",
+    "spans": []
+  },
+  {
+    "full_text": "Productiecode 3456789012 komt niet overeen met de specificaties.",
+    "spans": []
+  },
+  {
+    "full_text": "Batchnummer 5678901234 is goedgekeurd door kwaliteitscontrole.",
+    "spans": []
+  },
+  {
+    "full_text": "Serienummer 2345678901 hoort bij het apparaat in kamer 12.",
+    "spans": []
+  },
+  {
+    "full_text": "Het document dateert uit 2024 AD en beschrijft de werkzaamheden.",
+    "spans": []
+  },
+  {
+    "full_text": "In het jaar 1984 AB werd de wet van kracht.",
+    "spans": []
+  },
+  {
+    "full_text": "Notitie 3012 AG verwijst naar de interne procedure.",
+    "spans": []
+  },
+  {
+    "full_text": "Paragraaf 7523 BK behandelt de uitzonderingen op de regel.",
+    "spans": []
+  },
+  {
+    "full_text": "Sectie 4815 JK van het rapport bevat de conclusies.",
+    "spans": []
+  },
+  {
+    "full_text": "Meneer Van Amsterdam heeft de vergadering voorgezeten.",
+    "spans": []
+  },
+  {
+    "full_text": "Mevrouw De Groningen sprak namens de vakbond.",
+    "spans": []
+  },
+  {
+    "full_text": "Familie Den Haag won de prijs in de lokale competitie.",
+    "spans": []
+  },
+  {
+    "full_text": "Het merk Albert Heijn is een van de grootste supermarkten.",
+    "spans": []
+  },
+  {
+    "full_text": "De Johan Cruijff Arena is een stadion in Amsterdam-Zuidoost.",
+    "spans": []
+  },
+  {
+    "full_text": "De vergadering is gepland voor volgende week dinsdag.",
+    "spans": []
+  },
+  {
+    "full_text": "Het rapport wordt elk kwartaal opgesteld.",
+    "spans": []
+  },
+  {
+    "full_text": "In de jaren negentig was de economie sterk gegroeid.",
+    "spans": []
+  },
+  {
+    "full_text": "De kwaliteit van het product voldoet aan alle eisen.",
+    "spans": []
+  },
+  {
+    "full_text": "Het nieuwe beleid gaat in per het volgende kalenderjaar.",
+    "spans": []
+  },
+  {
+    "full_text": "De medewerkers hebben deelgenomen aan de jaarlijkse training.",
+    "spans": []
+  },
+  {
+    "full_text": "Volgens de richtlijnen moet de procedure binnen vijf werkdagen worden afgerond.",
+    "spans": []
+  },
+  {
+    "full_text": "Het systeem is geoptimaliseerd voor betere prestaties.",
+    "spans": []
+  },
+  {
+    "full_text": "De afdeling heeft het voorstel unaniem goedgekeurd.",
+    "spans": []
+  },
+  {
+    "full_text": "Na overleg met alle betrokkenen is het besluit genomen.",
+    "spans": []
+  },
+  {
+    "full_text": "De nieuwe versie van de applicatie is beschikbaar voor download.",
+    "spans": []
+  },
+  {
+    "full_text": "Het onderzoek toont aan dat de resultaten significant zijn.",
+    "spans": []
+  },
+  {
+    "full_text": "De commissie heeft het advies uitgebracht aan het bestuur.",
+    "spans": []
+  }
+]

@@ -1259,6 +1259,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "bandit" },
+    { name = "faker" },
     { name = "httpx" },
     { name = "matplotlib" },
     { name = "plotly" },
@@ -1280,6 +1281,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", specifier = ">=1.9.4" },
+    { name = "faker", specifier = ">=40.5.1" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "matplotlib", specifier = ">=3.9.0" },
     { name = "plotly", specifier = ">=5.24.0" },
