@@ -13,7 +13,7 @@ language: nl
 ner:
   type: spacy
   model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
-  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON] # added more entities
+  entities: [DATE, LOCATION, MONEY, NORP, ORGANIZATION, PERSON] 
   ner_strength: 0.85
   enabled: true
 
@@ -28,53 +28,57 @@ context_aware_enhancer:
 recognizers:
   - name: DutchPhoneNumberRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchIBANRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchBSNRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchDateRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: EmailRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchPassportIdRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchDriversLicenseRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchVATRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchKvKRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchLicensePlateRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: IPv4Recognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: CaseNumberRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: MACAddressRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchPostcodeRecognizer
     type: pattern
     enabled: true
 
@@ -102,8 +106,8 @@ recognizers:
       organisatie: ORGANIZATION
       werkgever: ORGANIZATION
       bedrijf: ORGANIZATION
-      inkomen: INCOME
-      salaris: INCOME
+      inkomen: MONEY
+      salaris: MONEY
       opleidingsniveau: EDUCATION_LEVEL
       opleiding: EDUCATION_LEVEL
     flat_ner: false # true = no nested entities

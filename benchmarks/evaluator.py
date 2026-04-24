@@ -21,13 +21,13 @@ Usage:
 
 from __future__ import annotations
 
-import json
+import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import NamedTuple
 
 import numpy as np
+
 
 
 class _Span(NamedTuple):
@@ -71,74 +71,28 @@ class _EntityMetrics:
         return 2 * p * r / (p + r) if (p + r) else 0.0
 
 
-class ConfusionMatrixBuilder:
-    """Build confusion matrix: entity type × entity type.
+@dataclass
+class PiiCoverageMetrics:
+    """Binary PII coverage: was any PII detected per sample?"""
 
-    Rows = ground truth classes
-    Cols = predicted classes
-    Diagonal = correct predictions (TP)
-    Off-diagonal = misclassifications (FP/FN)
-    """
+    total_samples: int = 0
+    samples_with_pii: int = 0
+    samples_pii_any_pred: int = 0
+    samples_missed_entirely: int = 0
 
-    def __init__(self, entity_types: list[str]) -> None:
-        """Initialize confusion matrix.
+    @property
+    def pii_recall_binary(self) -> float:
+        """Fraction of PII-containing samples where model predicted at least one span."""
+        return (
+            self.samples_pii_any_pred / self.samples_with_pii
+            if self.samples_with_pii
+            else 0.0
+        )
 
-        Args:
-            entity_types: Sorted list of entity types (determines row/col order)
-        """
-        self.entity_types = sorted(entity_types)
-        self.entity_to_idx = {e: i for i, e in enumerate(self.entity_types)}
-        n = len(self.entity_types)
-        # Matrix: n × n (no extra "missing" or "background" class for now)
-        self.matrix: np.ndarray = np.zeros((n, n), dtype=int)
-
-    def add_tp(self, entity_type: str) -> None:
-        """Record true positive (correct entity detected).
-
-        Args:
-            entity_type: Entity type that was correctly detected
-        """
-        idx = self.entity_to_idx[entity_type]
-        self.matrix[idx, idx] += 1
-
-    def add_fp(self, pred_entity_type: str, gt_entity_type: str) -> None:
-        """Record false positive / misclassification.
-
-        Args:
-            pred_entity_type: What the model predicted
-            gt_entity_type: What the ground truth actual is
-        """
-        gt_idx = self.entity_to_idx.get(gt_entity_type)
-        pred_idx = self.entity_to_idx.get(pred_entity_type)
-        if gt_idx is not None and pred_idx is not None:
-            self.matrix[gt_idx, pred_idx] += 1
-
-    def add_fn(self, gt_entity_type: str) -> None:
-        """Record false negative (entity missed by model).
-
-        Args:
-            gt_entity_type: Entity type that was missed
-        """
-        # No predicted entity, so mark as "missed" via diagonal 0
-        # In confusion matrix: ground-truth present but prediction absent
-        # We'll track this separately if needed, for now just count in FN
-        pass
-
-    def get_matrix(self) -> np.ndarray:
-        """Return the confusion matrix (not normalized)."""
-        return self.matrix
-
-    def get_matrix_normalized_by_row(self) -> np.ndarray:
-        """Normalize confusion matrix by row (per ground-truth entity).
-
-        Returns:
-            Normalized matrix where each row sums to 1.0
-            Interpretation: For each ground-truth entity X, what % was predicted as Y?
-        """
-        row_sums = self.matrix.sum(axis=1, keepdims=True)
-        # Avoid division by zero
-        row_sums[row_sums == 0] = 1
-        return self.matrix / row_sums
+    @property
+    def samples_without_pii(self) -> int:
+        """Samples where GT contained no PII."""
+        return self.total_samples - self.samples_with_pii
 
 
 @dataclass
@@ -149,6 +103,7 @@ class EvaluationResult:
     confusion_matrix: np.ndarray
     entity_types: list[str]
     errors: dict[str, list[dict]]
+    pii_coverage: PiiCoverageMetrics = field(default_factory=PiiCoverageMetrics)
 
     @property
     def global_tp(self) -> int:
@@ -210,8 +165,16 @@ class EvaluationResult:
                     "fn": int(self.metrics[entity].fn),
                 }
                 for entity in self.entity_types
+                if entity != "O"
             },
             "confusion_matrix": self.confusion_matrix.tolist(),
+            "pii_coverage": {
+                "total_samples": self.pii_coverage.total_samples,
+                "samples_with_pii": self.pii_coverage.samples_with_pii,
+                "samples_pii_any_pred": self.pii_coverage.samples_pii_any_pred,
+                "samples_missed_entirely": self.pii_coverage.samples_missed_entirely,
+                "pii_recall_binary": float(self.pii_coverage.pii_recall_binary),
+            },
         }
 
 
@@ -235,16 +198,53 @@ class CustomEvaluator:
         self.iou_threshold = iou_threshold
         self.score_threshold = score_threshold
 
+    @staticmethod
+    def align_labels(
+        dataset: list[_Sample],
+        label_map: dict[str, str | None],
+    ) -> list[_Sample]:
+        """Remap ground-truth entity labels before evaluation.
+
+        Maps dataset labels to the entity types a specific model configuration
+        can detect. Labels mapped to None are dropped (model cannot detect them).
+        Labels not present in label_map are kept as-is.
+
+        Args:
+            dataset: List of samples with ground-truth spans
+            label_map: Dict of {dataset_label: model_label | None}
+                       None means drop the span from evaluation.
+
+        Returns:
+            New dataset list with remapped/dropped spans.
+        """
+        aligned = []
+        for sample in dataset:
+            mapped_spans = []
+            for span in sample.spans:
+                if span.entity_type in label_map:
+                    new_type = label_map[span.entity_type]
+                    if new_type is not None:
+                        mapped_spans.append(_Span(new_type, span.start, span.end))
+                    # else: drop (None mapping means model cannot detect this type)
+                else:
+                    mapped_spans.append(span)
+            aligned.append(_Sample(sample.text, mapped_spans))
+        return aligned
+
     def evaluate(
         self,
         dataset: list[_Sample],
         entities: frozenset[str] | None = None,
+        label_map: dict[str, str | None] | None = None,
     ) -> EvaluationResult:
         """Run full evaluation pipeline on dataset.
 
         Args:
             dataset: List of samples with text and ground-truth spans
             entities: Optional filter to evaluate only specific entity types
+            label_map: Optional entity label remapping applied to ground truth
+                       before evaluation (e.g. to align dataset labels to a
+                       specific model's supported entity types).
 
         Returns:
             EvaluationResult with metrics, confusion matrix, errors
@@ -252,14 +252,24 @@ class CustomEvaluator:
         # Import here to avoid circular dependency with text_analyzer
         from src.api.services.text_analyzer import analyze
 
-        # 1. Compute per-entity metrics
+        # Apply label mapping to ground-truth spans
+        if label_map:
+            dataset = self.align_labels(dataset, label_map)
+
+        # Per-entity metrics and confusion matrix data
         metrics: dict[str, _EntityMetrics] = defaultdict(lambda: _EntityMetrics())
+        coverage = PiiCoverageMetrics()
         errors: dict[str, list[dict]] = {
             "false_positives": [],
             "false_negatives": [],
             "partial_matches": [],
         }
-        # Track misclassifications: (gt_entity_type, pred_entity_type) → count
+        # Confusion matrix entries: (gt_type, pred_type) → count
+        # Convention: row = ground truth, col = prediction
+        #   TP diagonal:       (A, A)
+        #   FN (missed):       (A, "O")  — GT was A, nothing predicted
+        #   FP (spurious):    ("O", B)  — no GT, model predicted B
+        #   Misclassification: (A, B)   — GT was A, model predicted B
         misclassifications: dict[tuple[str, str], int] = defaultdict(int)
 
         for sample in dataset:
@@ -271,53 +281,88 @@ class CustomEvaluator:
                 if r.score >= self.score_threshold
             ]
 
-            # Match predictions to ground truth
+            # Scope GT and predictions to entity filter
+            gt_spans = sample.spans
+            if entities:
+                gt_spans = [s for s in gt_spans if s.entity_type in entities]
+                predictions = [p for p in predictions if p.entity_type in entities]
+
+            # Track binary PII coverage per sample
+            coverage.total_samples += 1
+            if gt_spans:
+                coverage.samples_with_pii += 1
+                if predictions:
+                    coverage.samples_pii_any_pred += 1
+                else:
+                    coverage.samples_missed_entirely += 1
+
+            # --- Bipartite greedy TP matching (same entity type, IoU >= threshold) ---
+            # Compute all qualifying (iou, gt_idx, pred_idx) pairs, then assign
+            # greedily from highest IoU down so each span is matched at most once.
+            candidates: list[tuple[float, int, int]] = []
+            for gi, gt in enumerate(gt_spans):
+                for pi, pred in enumerate(predictions):
+                    if pred.entity_type != gt.entity_type:
+                        continue
+                    iou = self._iou(pred.start, pred.end, gt.start, gt.end)
+                    if iou >= self.iou_threshold:
+                        candidates.append((iou, gi, pi))
+
+            matched_gts: set[int] = set()
             matched_preds: set[int] = set()
+            for _iou, gi, pi in sorted(candidates, reverse=True):
+                if gi in matched_gts or pi in matched_preds:
+                    continue
+                metrics[gt_spans[gi].entity_type].tp += 1
+                matched_gts.add(gi)
+                matched_preds.add(pi)
 
-            for gt in sample.spans:
-                found = False
+            # --- Unmatched GT spans → FN (or misclassification) ---
+            for gi, gt in enumerate(gt_spans):
+                if gi in matched_gts:
+                    continue
+
+                # Check for spatial overlap with a different entity type
                 best_iou = 0.0
-                best_i = -1
-                best_wrong_type = None
+                best_pi = -1
+                best_wrong_type: str | None = None
+                for pi, pred in enumerate(predictions):
+                    if pi in matched_preds or pred.entity_type == gt.entity_type:
+                        continue
+                    iou = self._iou(pred.start, pred.end, gt.start, gt.end)
+                    if iou >= self.iou_threshold and iou > best_iou:
+                        best_iou = iou
+                        best_pi = pi
+                        best_wrong_type = pred.entity_type
 
-                # Try to find matching prediction
-                for i, pred in enumerate(predictions):
-                    iou = self._iou(
-                        pred.start,
-                        pred.end,
-                        gt.start,
-                        gt.end,
+                gt_text = sample.text[gt.start : gt.end]
+                context_start = max(0, gt.start - 20)
+                context_end = min(len(sample.text), gt.end + 20)
+                context = sample.text[context_start:context_end]
+
+                metrics[gt.entity_type].fn += 1
+
+                if best_wrong_type is not None:
+                    # Misclassification: same span, wrong type
+                    # FN for GT type (already counted), FP for predicted type
+                    metrics[best_wrong_type].fp += 1
+                    misclassifications[(gt.entity_type, best_wrong_type)] += 1
+                    matched_preds.add(best_pi)
+                    pred_text = sample.text[
+                        predictions[best_pi].start : predictions[best_pi].end
+                    ]
+                    errors["partial_matches"].append(
+                        {
+                            "entity_type": gt.entity_type,
+                            "predicted_type": best_wrong_type,
+                            "predicted": pred_text,
+                            "ground_truth": gt_text,
+                            "iou": float(best_iou),
+                        }
                     )
-
-                    if pred.entity_type == gt.entity_type:
-                        if iou >= self.iou_threshold:
-                            # Match found
-                            found = True
-                            metrics[gt.entity_type].tp += 1
-                            matched_preds.add(i)
-                            break
-                        elif iou > best_iou:
-                            # Track best partial match (same type)
-                            best_iou = iou
-                            best_i = i
-                    else:
-                        # Different entity type - track for misclassification
-                        if iou > best_iou:
-                            best_iou = iou
-                            best_i = i
-                            best_wrong_type = pred.entity_type
-
-                if not found:
-                    # False negative
-                    metrics[gt.entity_type].fn += 1
-                    # Track in confusion matrix as (O, entity_type)
-                    misclassifications[("O", gt.entity_type)] += 1
-
-                    gt_text = sample.text[gt.start : gt.end]
-                    context_start = max(0, gt.start - 20)
-                    context_end = min(len(sample.text), gt.end + 20)
-                    context = sample.text[context_start:context_end]
-
+                else:
+                    # Pure miss: GT present, nothing predicted
+                    misclassifications[(gt.entity_type, "O")] += 1
                     errors["false_negatives"].append(
                         {
                             "entity_type": gt.entity_type,
@@ -326,64 +371,41 @@ class CustomEvaluator:
                         }
                     )
 
-                    # Record partial match or misclassification if applicable
-                    if best_iou >= self.iou_threshold:
-                        pred = predictions[best_i]
-                        pred_text = sample.text[pred.start : pred.end]
-                        
-                        if best_wrong_type:
-                            # Misclassification: spatial match but wrong entity type
-                            misclassifications[(gt.entity_type, best_wrong_type)] += 1
-                            matched_preds.add(best_i)  # Mark as matched for FP purposes
-                        
-                        errors["partial_matches"].append(
-                            {
-                                "entity_type": gt.entity_type,
-                                "predicted": pred_text,
-                                "ground_truth": gt_text,
-                                "iou": float(best_iou),
-                            }
-                        )
+            # --- Unmatched predictions → FP (spurious) ---
+            for pi, pred in enumerate(predictions):
+                if pi in matched_preds:
+                    continue
+                metrics[pred.entity_type].fp += 1
+                misclassifications[("O", pred.entity_type)] += 1
+                pred_text = sample.text[pred.start : pred.end]
+                context_start = max(0, pred.start - 20)
+                context_end = min(len(sample.text), pred.end + 20)
+                context = sample.text[context_start:context_end]
+                errors["false_positives"].append(
+                    {
+                        "entity_type": pred.entity_type,
+                        "text": pred_text,
+                        "context": context,
+                    }
+                )
 
-            # False positives (unmatched predictions)
-            for i, pred in enumerate(predictions):
-                if i not in matched_preds:
-                    metrics[pred.entity_type].fp += 1
-                    # Track in confusion matrix as (entity_type, O) for spurious predictions
-                    misclassifications[(pred.entity_type, "O")] += 1
-
-                    pred_text = sample.text[pred.start : pred.end]
-                    context_start = max(0, pred.start - 20)
-                    context_end = min(len(sample.text), pred.end + 20)
-                    context = sample.text[context_start:context_end]
-
-                    errors["false_positives"].append(
-                        {
-                            "entity_type": pred.entity_type,
-                            "text": pred_text,
-                            "context": context,
-                        }
-                    )
-
-        # 2. Filter entities if requested
+        # Filter metrics to entity set (redundant when per-sample filter is active,
+        # kept as safety net for entities that slip through label_map)
         if entities:
             metrics = {k: v for k, v in metrics.items() if k in entities}
 
-        # 3. Build confusion matrix
+        # Build confusion matrix — always (n+1)×(n+1) including the "O" row/col
         confusion_matrix = self._build_confusion_matrix(metrics, misclassifications)
 
-        # 4. Build entity_types list (including "O" pseudo-entity only if not filtered)
-        entity_types = sorted(metrics.keys())
-        if entities is None:
-            # Only add "O" if we're using all entities (not filtered)
-            entity_types.append("O")
+        # entity_types always includes "O" to match the (n+1)×(n+1) matrix shape
+        entity_types = sorted(metrics.keys()) + ["O"]
 
-        # 5. Return result
         return EvaluationResult(
             metrics=metrics,
             confusion_matrix=confusion_matrix,
             entity_types=entity_types,
             errors=errors,
+            pii_coverage=coverage,
         )
 
     def _iou(self, pred_start: int, pred_end: int, gt_start: int, gt_end: int) -> float:
@@ -416,16 +438,15 @@ class CustomEvaluator:
     ) -> np.ndarray:
         """Build confusion matrix from per-entity metrics.
 
-        Rows = ground-truth entity types + O (Other/missed)
-        Cols = predicted entity types + O (Other/spurious)
-        Diagonal = correct predictions (TP)
-        Row O = false negatives (missed entities per type)
-        Col O = false positives without overlap (spurious predictions per type)
-        Off-diagonal (Entity→Entity) = misclassifications (spatial match, wrong type)
+        Standard row=GT, col=prediction layout:
+          Diagonal (A, A)  = TP — correct detection
+          Col O   (A, "O") = FN — GT was A, model predicted nothing
+          Row O  ("O",  B) = FP — no GT, model spuriously predicted B
+          Off-diagonal (A, B) = misclassification — GT was A, predicted B
 
         Args:
             metrics: Per-entity TP/FP/FN counts
-            misclassifications: Dict of (gt_type, pred_type) → count, including ("O", type) and (type, "O")
+            misclassifications: Dict of (gt_type, pred_type) → count
 
         Returns:
             (n+1) × (n+1) confusion matrix (n = number of entity types, +1 for O)
@@ -450,3 +471,55 @@ class CustomEvaluator:
                 matrix[i, j] += count
 
         return matrix
+
+
+_TOKEN_RE = re.compile(r"[a-zA-Z\u00C0-\u024F]{2,}")
+
+
+def token_error_analysis(
+    errors: dict[str, list[dict]],
+    n: int = 10,
+) -> dict:
+    """Aggregate token-level analysis of false positives and false negatives.
+
+    For false positives: most common tokens in the wrongly-predicted text.
+    For false negatives: most common context tokens around missed entities
+    (useful for identifying recognizer context words to boost confidence scores).
+
+    Args:
+        errors: errors dict from EvaluationResult.errors
+        n: Number of top tokens to return per category
+
+    Returns:
+        {
+            "fp_tokens": [(token, count), ...],
+            "fn_context_tokens": [(token, count), ...],
+            "fp_by_entity": {entity_type: [(token, count), ...]},
+            "fn_by_entity": {entity_type: [(token, count), ...]},
+        }
+    """
+    def _tokens(text: str) -> list[str]:
+        return [t.lower() for t in _TOKEN_RE.findall(text)]
+
+    fp_counts: Counter = Counter()
+    fp_by_entity: dict[str, Counter] = defaultdict(Counter)
+    for err in errors.get("false_positives", []):
+        toks = _tokens(err.get("text", ""))
+        fp_counts.update(toks)
+        fp_by_entity[err["entity_type"]].update(toks)
+
+    fn_ctx_counts: Counter = Counter()
+    fn_by_entity: dict[str, Counter] = defaultdict(Counter)
+    for err in errors.get("false_negatives", []):
+        # Context tokens, excluding the missed entity text itself
+        entity_toks = set(_tokens(err.get("text", "")))
+        ctx_toks = [t for t in _tokens(err.get("context", "")) if t not in entity_toks]
+        fn_ctx_counts.update(ctx_toks)
+        fn_by_entity[err["entity_type"]].update(ctx_toks)
+
+    return {
+        "fp_tokens": fp_counts.most_common(n),
+        "fn_context_tokens": fn_ctx_counts.most_common(n),
+        "fp_by_entity": {et: c.most_common(n) for et, c in fp_by_entity.items()},
+        "fn_by_entity": {et: c.most_common(n) for et, c in fn_by_entity.items()},
+    }

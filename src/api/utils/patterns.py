@@ -112,6 +112,14 @@ class DutchBSNRecognizer(PatternRecognizer):
         expected_check = total % 11
         return digits[8] == expected_check
 
+# Context-woorden voor postcode-herkenning. Verlaagde base-score
+# wordt opgehoogd door LemmaContextAwareEnhancer bij nabijheid van deze woorden.
+_POSTCODE_CONTEXT = [
+    "postcode", "pc", "adres", "woonplaats", "woonachtig",
+    "straat", "gevestigd", "woont", "postbus",
+]
+
+
 class DutchPostcodeRecognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
@@ -120,12 +128,12 @@ class DutchPostcodeRecognizer(PatternRecognizer):
         pattern = Pattern(
             "NL_POSTCODE",
             r"(?<!\d[-/.])\b(?!0{4})(?:[1-9]\d{3})\s?(?!SA|SD|SS)[A-HJ-NP-Z]{2}\b",
-            0.55,
+            0.4,
         )
         super().__init__(
             "POSTCODE",
             patterns=[pattern],
-            context=context,  # type: ignore[arg-type]
+            context=context or _POSTCODE_CONTEXT,
             supported_language=supported_language,
         )
 
@@ -145,17 +153,25 @@ class DutchVATRecognizer(PatternRecognizer):
 
 
 # KvK-nummer (8 cijfers in Handelsregister)
+# Score zeer laag: elk 8-cijferig getal matcht. Context-woorden boosten
+# via LemmaContextAwareEnhancer wanneer "kvk", "handelsregister" etc. nabij staan.
+_KVK_CONTEXT = [
+    "kvk", "kamer van koophandel", "handelsregister", "kvknummer",
+    "inschrijving", "inschrijvingsnummer",
+]
+
+
 class DutchKvKRecognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
     ) -> None:
         patterns = [
-            Pattern("KVK_8_DIGIT", r"(?<!\d[/ ])\b\d{8}\b", 0.45)  # raise score with context
+            Pattern("KVK_8_DIGIT", r"(?<!\d[/ ])\b\d{8}\b", 0.01)
         ]
         super().__init__(
             "KVK_NUMBER",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _KVK_CONTEXT,
             supported_language=supported_language,
         )
 
@@ -251,7 +267,7 @@ class DutchDateRecognizer(PatternRecognizer):
             ),
         ]
         super().__init__(
-            supported_entity="DATE_TIME",
+            supported_entity="DATE",
             patterns=patterns,
             context=context,  # type: ignore[arg-type]
             supported_language=supported_language,
@@ -418,11 +434,18 @@ class MACAddressRecognizer(PatternRecognizer):
         )
 
 
+# Score zeer laag: elk 10-cijferig getal matcht. Context-woorden boosten
+# via LemmaContextAwareEnhancer.
+_DRIVERS_LICENSE_CONTEXT = [
+    "rijbewijs", "rijbewijsnummer", "bestuurder", "chauffeur", "rijden",
+]
+
+
 class DutchDriversLicenseRecognizer(PatternRecognizer):
     """Herkenner voor Nederlands rijbewijsnummer (10 cijfers).
 
-    Detecteert exact 10 opeenvolgende cijfers. Score relatief laag vanwege
-    mogelijke false positives bij generieke cijfersreeksen.
+    Detecteert exact 10 opeenvolgende cijfers. Score zeer laag vanwege
+    hoge kans op false positives; context-woorden vereist voor betrouwbare detectie.
     """
 
     def __init__(
@@ -432,12 +455,12 @@ class DutchDriversLicenseRecognizer(PatternRecognizer):
             Pattern(
                 "NL_DRIVERS_LICENSE",
                 r"\b\d{10}\b",
-                0.45,
+                0.01,
             )
         ]
         super().__init__(
             supported_entity="DRIVERS_LICENSE",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _DRIVERS_LICENSE_CONTEXT,
             supported_language=supported_language,
         )

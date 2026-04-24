@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, RecognizerResult
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_analyzer.predefined_recognizers import SpacyRecognizer
-from presidio_analyzer.context_aware_enhancers import LemmaContextAwareEnhancer
+from presidio_analyzer.context_aware_enhancers import LemmaContextAwareEnhancer, ContextAwareEnhancer
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import EngineResult, OperatorConfig
 
@@ -73,15 +73,27 @@ def _build_analyzer() -> AnalyzerEngine:
     #     registry.remove_recognizer("SpacyRecognizer")
     
 
-    # Optional: Setup context-aware enhancement
-    # Useful for boosting confidence of weak regex patterns using surrounding words
-    context_enhancer = None
-    if plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("enabled", False):
-        context_enhancer = LemmaContextAwareEnhancer(
-            context_similarity_factor=plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("context_similarity_factor", 0.35),
-            min_score_with_context_similarity=plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("min_score_with_context_similarity", 0.4),
+    # Context-aware enhancement.
+    # enabled=true  → LemmaContextAwareEnhancer with custom or default params.
+    #                  Context words on recognizers boost confidence scores.
+    # enabled=false → No-op enhancer that never boosts scores.
+    #                  Useful for benchmarking raw pattern/NER performance.
+    # Presidio creates a default LemmaContextAwareEnhancer when None is passed,
+    # so we must explicitly pass a no-op to truly disable it.
+    ctx_cfg = plugin_cfg.context_enhancer_config
+    if ctx_cfg.get("enabled", False):
+        context_enhancer: ContextAwareEnhancer = LemmaContextAwareEnhancer(
+            context_similarity_factor=ctx_cfg.get("context_similarity_factor", 0.35),
+            min_score_with_context_similarity=ctx_cfg.get("min_score_with_context_similarity", 0.4),
         )
         logger.info("Context-aware enhancement enabled (LemmaContextAwareEnhancer)")
+    else:
+        # No-op: factor=0 ensures context words never change the score.
+        context_enhancer = LemmaContextAwareEnhancer(
+            context_similarity_factor=0.0,
+            min_score_with_context_similarity=0.0,
+        )
+        logger.info("Context-aware enhancement disabled (no-op enhancer)")
 
     engine = AnalyzerEngine(
         nlp_engine=nlp_engine,
@@ -133,11 +145,16 @@ def _remove_ner_overlapping_patterns(
         meta = r.recognition_metadata or {}
         return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "GLiNERRecognizer"
 
+    def _is_spacy_result(r: RecognizerResult) -> bool:
+        meta = r.recognition_metadata or {}
+        return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "SpacyRecognizer"
+
     def _should_keep(r: RecognizerResult) -> bool:
         if not _overlaps_any_pattern(r):
             return True
-        # Drop NER results overlapping with patterns
-        if r.entity_type in _NER_ENTITY_TYPES:
+        # Drop SpaCy NER results overlapping with patterns (identified by recognizer name,
+        # not entity type, to avoid accidentally dropping GLiNER results for shared types)
+        if _is_spacy_result(r):
             return False
         # Drop GLiNER results overlapping with patterns when entity type
         # is already covered by a pattern recognizer

@@ -39,6 +39,7 @@ class PluginConfig:
     pattern_entity_types: frozenset[str] = field(default_factory=frozenset)
     ner_entity_types: frozenset[str] = field(default_factory=frozenset)
     gliner_entity_types: frozenset[str] = field(default_factory=frozenset)
+    context_enhancer_config: dict[str, Any] = field(default_factory=dict)
     language: str = "nl"
 
 
@@ -106,6 +107,7 @@ def _load_gliner_recognizer(cfg: dict[str, Any]) -> EntityRecognizer:
         entity_mapping=cfg.get("entity_mapping", {}),
         flat_ner=cfg.get("flat_ner", False),
         multi_label=cfg.get("multi_label", True),
+        threshold=cfg.get("threshold", 0.4),
         map_location=cfg.get("map_location", "cpu"),
     )
 
@@ -211,5 +213,6 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
         pattern_entity_types=frozenset(pattern_entity_types),
         ner_entity_types=frozenset(ner_entity_types),
         gliner_entity_types=frozenset(gliner_entity_types),
+        context_enhancer_config=raw.get("context_aware_enhancer", {}),
         language=language,
     )

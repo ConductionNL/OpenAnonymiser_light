@@ -16,9 +16,12 @@ Exit codes:
 
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
 import sys
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -33,9 +36,11 @@ if str(_ROOT) not in sys.path:
 from benchmarks.evaluator import (
     CustomEvaluator,
     EvaluationResult,
+    PiiCoverageMetrics,
     _EntityMetrics,
     _Sample,
     _Span,
+    token_error_analysis,
 )
 from benchmarks.plotter import EvaluationPlotter
 
@@ -123,14 +128,157 @@ def _print_errors(errors: dict[str, list[dict]], max_per_type: int = 3) -> None:
     
     # Partial Matches
     if errors["partial_matches"]:
-        print("\n📊 Partial Matches (te laag IoU):")
+        print("\n\U0001f4ca Partial Matches (misclassificaties: zelfde span, verkeerd type):")
         print("-" * 80)
         
         for err in errors["partial_matches"][:5]:
-            print(f"\n  {err['entity_type']}:")
-            print(f"    Predicted:   '{err['predicted']}'")
+            pred_type = err.get("predicted_type", "?")
+            print(f"\n  GT={err['entity_type']} → pred={pred_type}:")
+            print(f"    Predicted:    '{err['predicted']}'")
             print(f"    Ground-truth: '{err['ground_truth']}'")
             print(f"    IoU: {err['iou']:.2f}")
+
+
+def _load_label_map(label_map_path: Path) -> dict[str, str | None]:
+    """Laad entity label mapping uit YAML.
+    
+    Labels met waarde null worden weggelaten uit evaluatie (model kan ze niet detecteren).
+    """
+    raw = yaml.safe_load(label_map_path.read_text(encoding="utf-8"))
+    return {k: (v if v != "null" else None) for k, v in raw.items()}
+
+
+def _print_pii_coverage(coverage: PiiCoverageMetrics) -> None:
+    """Print binary PII coverage metrics."""
+    print()
+    print("PII Coverage (binary):")
+    print("-" * 80)
+    print(f"  Totaal samples:                {coverage.total_samples}")
+    print(f"  Samples met PII (GT):          {coverage.samples_with_pii}")
+    print(f"  Samples zonder PII (GT):       {coverage.samples_without_pii}")
+    if coverage.samples_with_pii:
+        print(
+            f"  PII detected (≥1 pred):        {coverage.samples_pii_any_pred} "
+            f"/ {coverage.samples_with_pii}  "
+            f"({coverage.pii_recall_binary:.1%} binary recall)"
+        )
+        print(
+            f"  PII volledig gemist (0 pred):  {coverage.samples_missed_entirely}"
+        )
+
+
+def _print_token_analysis(errors: dict, n: int = 10) -> None:
+    """Print top-N token analysis over FP/FN errors."""
+    analysis = token_error_analysis(errors, n=n)
+
+    if analysis["fp_tokens"]:
+        print("\n  Top FP tokens (onterecht als PII herkend):")
+        for token, count in analysis["fp_tokens"]:
+            print(f"    {token:<30} {count:>4}×")
+
+    if analysis["fn_context_tokens"]:
+        print("\n  Top FN context tokens (context rondom gemiste PII — potentiële context-woorden):")
+        for token, count in analysis["fn_context_tokens"]:
+            print(f"    {token:<30} {count:>4}×")
+
+    if analysis["fp_by_entity"]:
+        print("\n  FP tokens per entity type:")
+        for entity, tokens in sorted(analysis["fp_by_entity"].items()):
+            if tokens:
+                top = ", ".join(f"'{t}'({c})" for t, c in tokens[:5])
+                print(f"    {entity}: {top}")
+
+    if analysis["fn_by_entity"]:
+        print("\n  FN context tokens per entity type:")
+        for entity, tokens in sorted(analysis["fn_by_entity"].items()):
+            if tokens:
+                top = ", ".join(f"'{t}'({c})" for t, c in tokens[:5])
+                print(f"    {entity}: {top}")
+
+
+def _save_run_metadata(
+    output_dir: Path,
+    data_path: Path,
+    thresholds_path: Path,
+    label_map_path: Path | None,
+    score_threshold: float,
+    iou_threshold: float,
+    entity_filter: frozenset[str] | None,
+    dataset_size: int,
+    all_pass: bool,
+    result: EvaluationResult,
+) -> Path:
+    """Sla run-configuratie en samenvatting op als run_metadata.json."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _sha256(p: Path) -> str:
+        return hashlib.sha256(p.read_bytes()).hexdigest()[:16]
+
+    try:
+        git_sha = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=_ROOT,
+            stderr=subprocess.DEVNULL,
+            timeout=5,
+        ).decode().strip()
+    except Exception:
+        git_sha = "unknown"
+
+    pipeline_info: dict = {}
+    try:
+        from src.api.services.text_analyzer import get_analyzer
+        engine = get_analyzer()
+        pipeline_info["recognizers"] = [
+            rec.name
+            for rec in engine.registry.get_recognizers("nl", all_fields=True)
+        ]
+        pipeline_info["context_aware_enhancer"] = (
+            engine.context_aware_enhancer.__class__.__name__
+            if engine.context_aware_enhancer
+            else "disabled"
+        )
+    except Exception as exc:
+        pipeline_info["error"] = str(exc)
+
+    plugins_path = _ROOT / "src" / "api" / "plugins.yaml"
+    pipeline_info["plugins_yaml_sha256"] = (
+        _sha256(plugins_path) if plugins_path.exists() else "unknown"
+    )
+
+    cov = result.pii_coverage
+    metadata = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "git_sha": git_sha,
+        "data": {
+            "path": str(data_path),
+            "sha256": _sha256(data_path),
+            "num_samples": dataset_size,
+        },
+        "thresholds": {
+            "path": str(thresholds_path),
+        },
+        "evaluation": {
+            "score_threshold": score_threshold,
+            "iou_threshold": iou_threshold,
+            "label_map": str(label_map_path) if label_map_path else None,
+            "entity_filter": sorted(entity_filter) if entity_filter else None,
+            "all_thresholds_passed": all_pass,
+        },
+        "pipeline": pipeline_info,
+        "summary": {
+            "global_precision": round(float(result.global_precision), 4),
+            "global_recall": round(float(result.global_recall), 4),
+            "global_f1": round(float(result.global_f1), 4),
+            "pii_recall_binary": round(float(cov.pii_recall_binary), 4),
+            "samples_missed_entirely": cov.samples_missed_entirely,
+        },
+    }
+
+    out_path = output_dir / "run_metadata.json"
+    out_path.write_text(
+        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    return out_path
 
 
 def _evaluate(
@@ -159,7 +307,7 @@ def _get_pattern_entities() -> frozenset[str]:
     except Exception:
         # Fallback als plugin loading mislukt
         return frozenset([
-            "PHONE_NUMBER", "IBAN", "BSN", "DATE_TIME", "EMAIL", "ID_NO",
+            "PHONE_NUMBER", "IBAN", "BSN", "DATE", "EMAIL", "ID_NO",
             "DRIVERS_LICENSE", "VAT_NUMBER", "KVK_NUMBER", "LICENSE_PLATE",
             "IP_ADDRESS", "CASE_NO"
         ])
@@ -276,6 +424,13 @@ def _print_table(
     help="Directory where plots and reports will be saved.",
 )
 @click.option(
+    "--label-map",
+    "label_map_path",
+    type=click.Path(exists=True, path_type=Path),
+    default=None,
+    help="Pad naar label-mapping YAML (bijv. benchmarks/label_maps/spacy_patterns.yaml).",
+)
+@click.option(
     "--pattern-only",
     is_flag=True,
     default=False,
@@ -300,6 +455,7 @@ def main(
     output_dir: Path,
     pattern_only: bool,
     entities: str | None,
+    label_map_path: Path | None,
 ) -> None:
     """Evalueer PII-detectie precision/recall per entiteitstype."""
     print(f"Dataset:      {data_path}")
@@ -313,6 +469,16 @@ def main(
     except (json.JSONDecodeError, yaml.YAMLError, KeyError) as exc:
         click.echo(f"Fout bij laden data/drempels: {exc}", err=True)
         sys.exit(2)
+
+    # Load optional label map
+    label_map: dict[str, str | None] | None = None
+    if label_map_path:
+        try:
+            label_map = _load_label_map(label_map_path)
+            print(f"Label map:    {label_map_path}")
+        except (yaml.YAMLError, KeyError) as exc:
+            click.echo(f"Fout bij laden label map: {exc}", err=True)
+            sys.exit(2)
 
     print(f"Zinnen: {len(dataset)}\n")
 
@@ -332,7 +498,7 @@ def main(
         print(f"Filter: {', '.join(sorted(entity_filter))}\n")
     
     # Run evaluation
-    result = evaluator.evaluate(dataset, entities=entity_filter)
+    result = evaluator.evaluate(dataset, entities=entity_filter, label_map=label_map)
     
     # Filter thresholds to match evaluated entities
     filtered_thresholds = {
@@ -341,9 +507,11 @@ def main(
     }
     
     all_pass = _print_table(result.metrics, filtered_thresholds)
+    _print_pii_coverage(result.pii_coverage)
 
     if show_errors:
         _print_errors(result.errors)
+        _print_token_analysis(result.errors)
 
     # Generate plots if requested
     if plot:
@@ -372,7 +540,22 @@ def main(
             print("  • Generating single-page HTML report...")
             report_path = plotter.generate_html_report()
             print(f"    ✓ Saved: {report_path}")
-        
+
+        print("  \u2022 Saving run metadata...")
+        meta_path = _save_run_metadata(
+            output_dir=output_dir,
+            data_path=data_path,
+            thresholds_path=thresholds_path,
+            label_map_path=label_map_path,
+            score_threshold=score_threshold,
+            iou_threshold=iou_threshold,
+            entity_filter=entity_filter,
+            dataset_size=len(dataset),
+            all_pass=all_pass,
+            result=result,
+        )
+        print(f"    \u2713 Saved: {meta_path}")
+
         print()
 
     print()
