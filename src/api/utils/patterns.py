@@ -3,6 +3,12 @@ from typing import List, Optional
 from presidio_analyzer import Pattern, PatternRecognizer
 
 
+_PHONE_CONTEXT = [
+    "telefoon", "telefoonnummer", "mobiel", "mobiele", "bellen",
+    "bereikbaar", "contact", "gsm", "nummer", "tel",
+]
+
+
 class DutchPhoneNumberRecognizer(PatternRecognizer):
     """Herkenner voor Nederlandse telefoonnummers.
 
@@ -20,9 +26,15 @@ class DutchPhoneNumberRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="PHONE_NUMBER",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _PHONE_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_IBAN_CONTEXT = [
+    "iban", "bankrekening", "rekeningnummer", "rekening", "betaling",
+    "overschrijving", "bank", "betaalrekening", "crediteur", "debiteur",
+]
 
 
 class DutchIBANRecognizer(PatternRecognizer):
@@ -55,9 +67,15 @@ class DutchIBANRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="IBAN",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _IBAN_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_EMAIL_CONTEXT = [
+    "email", "e-mail", "mailadres", "emailadres", "mail",
+    "contactgegevens", "verstuur", "bericht",
+]
 
 
 class EmailRecognizer(PatternRecognizer):
@@ -78,9 +96,15 @@ class EmailRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="EMAIL",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _EMAIL_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_BSN_CONTEXT = [
+    "bsn", "burgerservicenummer", "sofinummer", "sofi",
+    "burgernummer", "persoonsnummer", "identificatie",
+]
 
 
 class DutchBSNRecognizer(PatternRecognizer):
@@ -93,7 +117,7 @@ class DutchBSNRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="BSN",
             patterns=[pattern],
-            context=context,  # type: ignore[arg-type]
+            context=context or _BSN_CONTEXT,
             supported_language="nl",
         )
 
@@ -139,6 +163,12 @@ class DutchPostcodeRecognizer(PatternRecognizer):
 
 
 # BTW-/VAT-nummer (NL999999999B99 – nieuw formaat)
+_VAT_CONTEXT = [
+    "btw", "btw-nummer", "btwnummer", "belasting", "omzetbelasting",
+    "fiscaal", "belastingdienst", "vat",
+]
+
+
 class DutchVATRecognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
@@ -147,7 +177,7 @@ class DutchVATRecognizer(PatternRecognizer):
         super().__init__(
             "VAT_NUMBER",
             patterns=[pattern],
-            context=context,  # type: ignore[arg-type]
+            context=context or _VAT_CONTEXT,
             supported_language=supported_language,
         )
 
@@ -197,6 +227,12 @@ _LICENSE_PATTERNS = [
 ]
 
 
+_LICENSE_PLATE_CONTEXT = [
+    "kenteken", "kentekennummer", "voertuig", "auto", "nummerplaat",
+    "registratie", "rdw", "motorvoertuig",
+]
+
+
 class DutchLicensePlateRecognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
@@ -205,12 +241,18 @@ class DutchLicensePlateRecognizer(PatternRecognizer):
         super().__init__(
             "LICENSE_PLATE",
             patterns=[pattern],
-            context=context,  # type: ignore[arg-type]
+            context=context or _LICENSE_PLATE_CONTEXT,
             supported_language=supported_language,
         )
 
 
 # Taal-onafhankelijke IPv4-adres-herkenner
+_IP_CONTEXT = [
+    "ip", "ip-adres", "ipadres", "netwerk", "server",
+    "host", "verbinding", "apparaat",
+]
+
+
 class IPv4Recognizer(PatternRecognizer):
     def __init__(
         self, context: Optional[List[str]] = None, supported_language: str = "nl"
@@ -224,9 +266,15 @@ class IPv4Recognizer(PatternRecognizer):
         super().__init__(
             "IP_ADDRESS",
             patterns=[pattern],
-            context=context,  # type: ignore[arg-type]
+            context=context or _IP_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_DATE_CONTEXT = [
+    "datum", "geboortedatum", "geboren", "overlijdensdatum",
+    "ingangsdatum", "einddatum", "verloopdatum", "geldig",
+]
 
 
 class DutchDateRecognizer(PatternRecognizer):
@@ -269,9 +317,15 @@ class DutchDateRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="DATE",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _DATE_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_PASSPORT_ID_CONTEXT = [
+    "paspoort", "identiteitskaart", "identiteitsbewijs", "documentnummer",
+    "legitimatie", "id-kaart", "idkaart", "reisdocument",
+]
 
 
 class DutchPassportIdRecognizer(PatternRecognizer):
@@ -307,9 +361,15 @@ class DutchPassportIdRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="ID_NO",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _PASSPORT_ID_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_CASE_CONTEXT = [
+    "zaak", "zaaknummer", "dossiernummer", "dossier", "rolnummer",
+    "parketnummer", "griffie", "uitspraak", "vonnis",
+]
 
 
 class CaseNumberRecognizer(PatternRecognizer):
@@ -394,9 +454,15 @@ class CaseNumberRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="CASE_NO",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _CASE_CONTEXT,
             supported_language=supported_language,
         )
+
+
+_MAC_CONTEXT = [
+    "mac", "mac-adres", "macadres", "netwerkadapter",
+    "hardware", "adapter", "interface",
+]
 
 
 class MACAddressRecognizer(PatternRecognizer):
@@ -429,7 +495,7 @@ class MACAddressRecognizer(PatternRecognizer):
         super().__init__(
             supported_entity="MAC_ADDRESS",
             patterns=patterns,
-            context=context,  # type: ignore[arg-type]
+            context=context or _MAC_CONTEXT,
             supported_language=supported_language,
         )
 
