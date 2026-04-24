@@ -1,0 +1,41 @@
+# Label mapping: SpaCy NER + custom pattern recognizers
+#
+# Maps dataset entity labels to what this pipeline configuration can detect.
+# Labels set to null are excluded from evaluation (no recognizer covers them).
+#
+# Supported by SpaCy nl_core_news_lg:
+#   DATE, LOCATION, MONEY, NORP, ORGANIZATION, PERSON
+#
+# Supported by custom pattern recognizers (plugins.yaml):
+#   BSN, CASE_NO, DATE, DRIVERS_LICENSE, EMAIL, IBAN, ID_NO, IP_ADDRESS,
+#   KVK_NUMBER, LICENSE_PLATE, MAC_ADDRESS, PHONE_NUMBER, POSTCODE, VAT_NUMBER
+#
+# Usage:
+#   uv run benchmarks/evaluate.py --label-map benchmarks/label_maps/spacy_patterns.yaml
+
+# Direct matches — keep as-is
+BSN: BSN
+CASE_NO: CASE_NO
+DATE: DATE
+DRIVERS_LICENSE: DRIVERS_LICENSE
+EMAIL: EMAIL
+IBAN: IBAN
+ID_NO: ID_NO
+IP_ADDRESS: IP_ADDRESS
+KVK_NUMBER: KVK_NUMBER
+LICENSE_PLATE: LICENSE_PLATE
+LOCATION: LOCATION
+MAC_ADDRESS: MAC_ADDRESS
+MONEY: MONEY
+NORP: NORP
+ORGANIZATION: ORGANIZATION
+PERSON: PERSON
+PHONE_NUMBER: PHONE_NUMBER
+POSTCODE: POSTCODE
+VAT_NUMBER: VAT_NUMBER
+
+# Not supported by SpaCy+patterns — exclude from evaluation
+EDUCATION_LEVEL: null
+INCOME: null
+POLITICAL_PARTY: null
+STREET_ADDRESS: null

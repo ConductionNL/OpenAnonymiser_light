@@ -1,0 +1,32 @@
+# Label mapping: GLiNER + custom pattern recognizers
+#
+# GLiNER+patterns covers all entity types in the dataset.
+# This file is the identity map — all labels are kept as-is.
+# Listed explicitly for documentation and to make run configurations symmetric.
+#
+# Usage:
+#   uv run benchmarks/evaluate.py --label-map benchmarks/label_maps/gliner_patterns.yaml
+
+BSN: BSN
+CASE_NO: CASE_NO
+DATE: DATE
+DRIVERS_LICENSE: DRIVERS_LICENSE
+EDUCATION_LEVEL: EDUCATION_LEVEL
+EMAIL: EMAIL
+IBAN: IBAN
+ID_NO: ID_NO
+INCOME: INCOME
+IP_ADDRESS: IP_ADDRESS
+KVK_NUMBER: KVK_NUMBER
+LICENSE_PLATE: LICENSE_PLATE
+LOCATION: LOCATION
+MAC_ADDRESS: MAC_ADDRESS
+MONEY: MONEY
+NORP: NORP
+ORGANIZATION: ORGANIZATION
+PERSON: PERSON
+PHONE_NUMBER: PHONE_NUMBER
+POLITICAL_PARTY: POLITICAL_PARTY
+POSTCODE: POSTCODE
+STREET_ADDRESS: STREET_ADDRESS
+VAT_NUMBER: VAT_NUMBER
