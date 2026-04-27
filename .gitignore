@@ -90,6 +90,9 @@ Thumbs.db
 *.pem
 *.key
 
+# Basic auth credentials (plain text htpasswd, never commit)
+basic-auth.auth
+
 # Deployment configurations with sensitive info
 *-prod.yaml
 *-accept.yaml
