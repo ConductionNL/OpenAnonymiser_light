@@ -7,6 +7,13 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 ## [Unreleased]
 
 ### Added
+- `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gpu`, `contextual`) met per flavor een expliciet deployment-model (self-contained / SaaS / SaaS+externe-deps)
+- `docs/architecture/entity-contract.md` — entity-matrix per flavor als bron-van-waarheid
+- `openspec/changes/split-into-3-flavors/` — proposal, design, tasks voor drie-smaken-split (ter review)
+
+### Notes
+- Versie-discrepantie gesignaleerd: CHANGELOG staat op 1.4.0, `src/api/main.py:45` staat op 1.3.0 — wordt bij merge van de flavor-split gesynct naar 1.5.0.
+- De-facto branch→flavor-mapping gedocumenteerd: `main` en `staging` draaien al `classic`; `development` draait een incomplete `gpu` (regex uit). De flavor-split maakt deze mapping expliciet en repareert de gap op `development`.
 - `tests/harness/` — container-gebaseerde test-harness per flavor. Spint via `compose.yaml` een OpenAnonymiser-container op (classic of gpu) en draait tests tegen de draaiende API. Skipt automatisch als de container niet bereikbaar is, dus veilig in standaard CI.
 - `tests/golden/` — golden dataset (14 Nederlandse voorbeelden, 17 entity-spans) + runner met per-entity precision/recall/F1-rapportage.
 - `tests/harness/test_option_1_classic.py` — harde invarianten: elk regex-entity in golden-set moet 100 % recall halen op classic. Soft NER-bands voor PERSON/LOCATION/ORGANIZATION.
