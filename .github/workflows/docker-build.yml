@@ -143,15 +143,42 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      # Build naar de runner (load: true), nog niet pushen — dan kan
+      # Trivy de gebouwde image scannen voordat hij in de registry komt.
+      - name: Build image (load to runner for scan)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: Dockerfile.${{ matrix.flavor }}
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          load: true
+          tags: scan-target:${{ matrix.flavor }}
           cache-from: type=gha,scope=${{ matrix.flavor }}
           cache-to: type=gha,mode=max,scope=${{ matrix.flavor }}
+
+      # Trivy CVE-scan op OS-packages + Python wheels in de venv.
+      # severity HIGH+CRITICAL, ignore-unfixed (geen ruis over CVE's
+      # zonder beschikbare patch). Faalt bij minstens één blocker.
+      - name: Trivy image vulnerability scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: scan-target:${{ matrix.flavor }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+          vuln-type: os,library
+
+      # Tweede build is instant door GHA-cache uit eerste step.
+      # Pas pushen als Trivy groen is (job stopt anders).
+      - name: Push image to registry
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.flavor }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.flavor }}
 
       - name: Image pushed summary
         if: github.event_name != 'pull_request'

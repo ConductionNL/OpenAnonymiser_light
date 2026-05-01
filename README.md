@@ -77,5 +77,5 @@ Bypass tijdelijk met `git push --no-verify`. Volledige test-suite + container bu
 | NER | SpaCy `nl_core_news_lg` (overal — lokaal, container, K8s) |
 | Patronen | Custom Dutch regex recognizers |
 | Package manager | uv |
-| Container | Docker / Podman |
+| Container | Docker |
 | Deployment | Helm + ArgoCD |
