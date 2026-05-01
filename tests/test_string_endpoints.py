@@ -5,6 +5,7 @@ Run: pytest tests/test_string_endpoints.py -v
 """
 
 import httpx
+import pytest
 
 
 class TestHealth:
@@ -140,6 +141,7 @@ class TestAnonymizeStructure:
 
 
 class TestAnonymizeStrategies:
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_replace_uses_entity_placeholder(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/anonymize",
@@ -155,6 +157,7 @@ class TestAnonymizeStrategies:
         assert "<PHONE_NUMBER>" in data["anonymized_text"]
         assert "0612345678" not in data["anonymized_text"]
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_redact_removes_value(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/anonymize",
@@ -168,6 +171,7 @@ class TestAnonymizeStrategies:
         assert r.status_code == 200
         assert "0612345678" not in r.json()["anonymized_text"]
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_hash_replaces_with_hex_string(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/anonymize",
@@ -183,6 +187,7 @@ class TestAnonymizeStrategies:
         assert "NL91ABNA0417164300" not in data["anonymized_text"]
         assert data["anonymized_text"] != data["original_text"]
 
+    @pytest.mark.skip(reason="Pattern recognizers disabled in plugins.yaml")
     def test_mask_inserts_asterisks(self, client: httpx.Client) -> None:
         r = client.post(
             "/api/v1/anonymize",

@@ -1,29 +1,28 @@
-# OpenAnonymiser plugin configuratie.
-# Voeg nieuwe recognizers toe zonder Python-code te schrijven.
-# Zet enabled: false om een module tijdelijk uit te schakelen.
+# GPU flavor — spaCy NER + GLiNER (transformer-NER, multilingual PII).
+# Vereist GPU voor productie-latency (zie docs/architecture/flavors.md).
+# Doelgroep: managed SaaS met GPU-node-pool.
 #
-# Ondersteunde typen:
-#   pattern     — bestaande PatternRecognizer subclasses uit src/api/utils/patterns.py
-#   spacy       — SpaCy NER (NER-engine; altijd precies één entry)
-#   transformer — HuggingFace transformers NER (vereist: pip install transformers torch)
-#   llm         — LLM-gebaseerde extractie (vereist: pip install openai / anthropic)
+# Deze config bewaart de huidige `development`-state: GLiNER aan, alle
+# pattern-recognizers behalve MAC uitgeschakeld. De pattern-set wordt in
+# een vervolg-PR weer ingeschakeld zodra de design-decisie over
+# pattern/GLiNER overlap is uitgewerkt (zie design.md decision 4 en
+# `harness-run-2026-04-19.md`).
 
 language: nl
 
 ner:
   type: spacy
+  # Default = lg voor lokale dev (CLAUDE.md regel). Containers zetten
+  # DEFAULT_SPACY_MODEL=nl_core_news_md in de image-env.
   model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
-  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON] # added more entities
+  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON]
   ner_strength: 0.85
   enabled: true
 
-# Context-aware enhancement: boosts confidence scores using surrounding words
-# Useful for weak regex patterns (ZIP codes, BSN, phone numbers, etc)
-# Only works if LemmaContextAwareEnhancer is properly configured
 context_aware_enhancer:
-  enabled: false  # Set to true to enable context enhancement
-  context_similarity_factor: 0.35  # How much context words boost the score
-  min_score_with_context_similarity: 0.4  # Minimum score after context boost
+  enabled: false
+  context_similarity_factor: 0.35
+  min_score_with_context_similarity: 0.4
 
 recognizers:
   - name: DutchPhoneNumberRecognizer
@@ -83,7 +82,6 @@ recognizers:
     enabled: true
     model: "urchade/gliner_multi_pii-v1"
     entity_mapping:
-      # CONTEXTUELE PII — alleen entiteiten die patterns niet kunnen detecteren
       persoon: PERSON
       naam: PERSON
       locatie: LOCATION
@@ -106,24 +104,8 @@ recognizers:
       salaris: INCOME
       opleidingsniveau: EDUCATION_LEVEL
       opleiding: EDUCATION_LEVEL
-    flat_ner: false # true = no nested entities
+    flat_ner: false
     multi_label: true
     threshold: 0.45
     map_location: "cpu"
     supported_language: "nl"
-
-  # Optionele modules — standaard uitgeschakeld.
-  # Schakel in door enabled: true te zetten en de vereiste packages te installeren.
-
-  # - name: DutchBERTRecognizer
-  #   type: transformer
-  #   model: "wietsedv/bert-base-dutch-cased"
-  #   entities: [PERSON, LOCATION, ORGANIZATION]
-  #   enabled: false
-
-  # - name: DutchLLMRecognizer
-  #   type: llm
-  #   provider: openai
-  #   model: gpt-4o-mini
-  #   entities: [PERSON, LOCATION, ORGANIZATION]
-  #   enabled: false

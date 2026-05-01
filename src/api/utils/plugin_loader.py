@@ -38,6 +38,7 @@ class PluginConfig:
     ner_config: dict[str, Any] = field(default_factory=dict)
     pattern_entity_types: frozenset[str] = field(default_factory=frozenset)
     ner_entity_types: frozenset[str] = field(default_factory=frozenset)
+    gliner_entity_types: frozenset[str] = field(default_factory=frozenset)
     language: str = "nl"
 
 
@@ -91,6 +92,24 @@ def _load_llm_recognizer(cfg: dict[str, Any]) -> EntityRecognizer:
     )
 
 
+def _load_gliner_recognizer(cfg: dict[str, Any]) -> EntityRecognizer:
+    "Laad de GLiNER recognizer (lazy import)."
+    try: from presidio_analyzer.predefined_recognizers import GLiNERRecognizer
+    except ImportError as exc:
+        raise ImportError(
+            f"GLiNER plugin '{cfg['name']}' vereist package: 'presidio-analyzer[gliner]'. "
+            f"Fout: {exc}"
+        ) from exc
+    return GLiNERRecognizer(
+        model_name=cfg["model"],
+        supported_language=cfg["supported_language"],
+        entity_mapping=cfg.get("entity_mapping", {}),
+        flat_ner=cfg.get("flat_ner", False),
+        multi_label=cfg.get("multi_label", True),
+        map_location=cfg.get("map_location", "cpu"),
+    )
+
+
 def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
     """Laad plugin-configuratie en instantieer alle actieve recognizers.
 
@@ -136,6 +155,7 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
     recognizers: list[EntityRecognizer] = []
     pattern_entity_types: set[str] = set()
     ner_entity_types: set[str] = set(ner_entities) if ner_enabled else set()
+    gliner_entity_types: set[str] = set()
 
     for plugin in raw.get("recognizers", []):
         if not plugin.get("enabled", True):
@@ -163,6 +183,13 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
                 recognizer = _load_llm_recognizer(plugin)
                 recognizers.append(recognizer)
                 logger.debug("LLM plugin geladen: %s", name)
+            
+            elif plugin_type == "gliner":
+                recognizer = _load_gliner_recognizer(plugin)
+                for et in set(plugin.get("entity_mapping", {}).values()):
+                    gliner_entity_types.add(et)
+                recognizers.append(recognizer)
+                logger.debug("GLiNER plugin geladen: %s", name)
 
             else:
                 logger.warning("Onbekend plugin type '%s' voor '%s', overgeslagen.", plugin_type, name)
@@ -183,5 +210,6 @@ def load_plugins(plugins_path: Path | None = None) -> PluginConfig:
         ner_config=nlp_config,
         pattern_entity_types=frozenset(pattern_entity_types),
         ner_entity_types=frozenset(ner_entity_types),
+        gliner_entity_types=frozenset(gliner_entity_types),
         language=language,
     )
