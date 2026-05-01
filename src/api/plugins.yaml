@@ -13,7 +13,7 @@ language: nl
 ner:
   type: spacy
   model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
-  entities: [DATE, LOCATION, MONEY, NORP, ORGANIZATION, PERSON] 
+  entities: [LOCATION, MONEY, NORP, ORGANIZATION, PERSON] 
   ner_strength: 0.85
   enabled: true
 
@@ -84,7 +84,7 @@ recognizers:
 
   - name: GLiNERRecognizer
     type: gliner
-    enabled: true
+    enabled: false
     model: "urchade/gliner_multi_pii-v1"
     entity_mapping:
       # CONTEXTUELE PII — alleen entiteiten die patterns niet kunnen detecteren
@@ -97,6 +97,8 @@ recognizers:
       stad: LOCATION
       wijk: LOCATION
       buurt: LOCATION
+      datum: DATE
+      date: DATE
       straatnaam: STREET_ADDRESS
       adres: STREET_ADDRESS
       nationaliteit: NORP
