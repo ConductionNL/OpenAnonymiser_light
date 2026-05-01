@@ -15,6 +15,9 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 - README: nieuwe Flavors-sectie met build-commando's en link naar `docs/architecture/flavors.md`.
 - `.env.example`: `PLUGINS_CONFIG` voorbeeld + uitleg.
 
+### Security
+- **Dependabot CVE-fix sweep** — `uv lock --upgrade` ruimt 21 alerts op default-branch op (8 HIGH, 11 MEDIUM, 2 LOW). Belangrijkste bumps: starlette 0.46→1.0, uvicorn 0.34→0.46, urllib3 2.4→2.6.3, orjson 3.9→3.11.6, python-multipart 0.0.20→0.0.22, ujson verwijderd (nergens meer een directe consumer). Alle 21 tests pass tegen draaiende API; geen regressie.
+
 ### Changed
 - **spaCy `nl_core_news_lg` overal** — lokaal venv, container, K8s. Was: lg lokaal, md in container. Beleid bijgesteld voor consistentie. `Dockerfile.{classic,gpu}` zetten `ENV DEFAULT_SPACY_MODEL=nl_core_news_lg`. Plugin yaml's defaulten nu op `${DEFAULT_SPACY_MODEL:-nl_core_news_lg}`. CLAUDE.md spaCy-sectie bijgewerkt.
 - `.github/workflows/docker-build.yml` test-job: `DEFAULT_SPACY_MODEL=nl_core_news_lg` (was md). Aparte md-pip-install-step verwijderd; `uv sync` installeert lg uit pyproject hard dep.
