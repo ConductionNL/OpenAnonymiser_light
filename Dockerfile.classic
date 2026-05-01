@@ -1,0 +1,58 @@
+# Classic flavor: spaCy + regex recognizers, CPU-only.
+# Multi-stage: build tools (uv, pip) blijven in de builder; de runtime
+# image bevat alleen de Python venv + app-code.
+
+# ---------- builder ----------
+FROM python:3.12.11-bookworm AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+ENV UV_NO_CACHE=1
+
+COPY pyproject.toml uv.lock ./
+
+# resolve from uv.lock only, no dev dependencies, geen gpu-extras.
+# Classic = base + spaCy lg + regex; geen GLiNER, geen torch, geen CUDA.
+RUN uv sync --frozen --no-dev --no-cache
+
+# Verifieer dat het lg model bruikbaar is.
+ARG FORCE_REBUILD_MAIN="2026-05-01T00:00Z"
+RUN set -eux; echo "$FORCE_REBUILD_MAIN" >/dev/null; \
+    .venv/bin/python -c "import spacy, importlib.metadata as m; spacy.load('nl_core_news_lg'); print('nl_core_news_lg ready'); [print(f'  {p}: {m.version(p)}') for p in ['presidio-analyzer','presidio-anonymizer','spacy']]"
+
+# Owner-shift naar de runtime UID/GID zodat de COPY in runtime stage klopt.
+RUN chown -R 1000:1000 /app
+
+# ---------- runtime ----------
+FROM python:3.12.11-slim-bookworm AS runtime
+
+RUN groupadd -g 1000 presidio && useradd --no-log-init -u 1000 -g presidio -m presidio
+
+WORKDIR /app
+RUN chown presidio:presidio /app
+
+COPY --from=builder --chown=presidio:presidio /app/.venv /app/.venv
+
+USER presidio
+
+# Selecteer de classic plugin-config (regex + spaCy, geen GLiNER, geen GPU vereist).
+ENV PLUGINS_CONFIG=/app/src/api/plugins.classic.yaml
+# spaCy lg overal — consistent met lokale dev (CLAUDE.md regel).
+ENV DEFAULT_SPACY_MODEL=nl_core_news_lg
+
+COPY --chown=presidio:presidio src/api ./src/api
+COPY --chown=presidio:presidio api.py ./
+COPY --chown=presidio:presidio scripts/healthcheck.py scripts/check_deps.py ./scripts/
+
+EXPOSE 8080
+
+HEALTHCHECK \
+    --interval=60s \
+    --timeout=5s \
+    --start-period=25s \
+    --retries=5 \
+  CMD [".venv/bin/python", "scripts/healthcheck.py", "--port", "8080"]
+
+CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "1", "--env", "production", "--port", "8080"]

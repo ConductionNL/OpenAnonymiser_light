@@ -4,7 +4,10 @@ on:
   push:
     branches: [ main, staging, development ]
   pull_request:
-    branches: [ main ]
+    # Build (zonder push) op PR's tegen alle release-branches, zodat
+    # Dockerfile-/dep-wijzigingen vóór merge worden gevalideerd.
+    # Push step respecteert al `github.event_name != 'pull_request'`.
+    branches: [ main, development, staging ]
   workflow_dispatch:
     inputs:
       ref:
@@ -37,16 +40,16 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv sync --group dev
-
-      - name: Download SpaCy model
-        run: uv pip install "nl_core_news_md @ https://github.com/explosion/spacy-models/releases/download/nl_core_news_md-3.8.0/nl_core_news_md-3.8.0-py3-none-any.whl"
+        # --extra gpu is nodig zolang de default plugins.yaml GLiNER op
+        # enabled heeft staan. Test-job draait tegen plugins.yaml (default),
+        # niet tegen plugins.classic.yaml of plugins.gpu.yaml.
+        run: uv sync --group dev --extra gpu
 
       - name: Start API
         run: |
-          DEFAULT_SPACY_MODEL=nl_core_news_md uv run api.py &
+          DEFAULT_SPACY_MODEL=nl_core_news_lg uv run api.py &
           echo "API_PID=$!" >> $GITHUB_ENV
-          
+
           # Wait for API to be ready (with healthcheck loop, max 60 seconds)
           for i in {1..60}; do
             if curl -s http://localhost:8080/api/v1/health | grep -q pong; then
@@ -69,9 +72,13 @@ jobs:
         run: kill $API_PID || true
 
   build:
-    name: Build and push image
+    name: Build and push ${{ matrix.flavor }} image
     runs-on: ubuntu-latest
     needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [classic, gpu]
 
     steps:
       - name: Checkout code
@@ -87,28 +94,44 @@ jobs:
           if [[ -z "$REF" ]]; then
             REF="${GITHUB_REF#refs/heads/}"
           fi
-          echo "Using REF=$REF"
+          FLAVOR="${{ matrix.flavor }}"
+          echo "Using REF=$REF FLAVOR=$FLAVOR"
 
+          # Tag-strategie:
+          # - elke flavor krijgt :{tier}-{flavor} (bv. dev-classic, acc-gpu)
+          # - default-alias per tier zonder suffix:
+          #     main      → :latest = classic   (classic = default per design.md)
+          #     staging   → :acc    = classic   (alleen classic gaat staging in)
+          #     develop.  → :dev    = gpu       (huidig cluster-gedrag bewaren)
           if [[ "$REF" == "main" ]]; then
             VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.3.0")
-            TAGS="${{ env.IMAGE_NAME }}:${VERSION},${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:main"
+            TAGS="${{ env.IMAGE_NAME }}:${FLAVOR}-${VERSION},${{ env.IMAGE_NAME }}:${FLAVOR}-latest,${{ env.IMAGE_NAME }}:${FLAVOR}-main"
+            if [[ "$FLAVOR" == "classic" ]]; then
+              TAGS="${TAGS},${{ env.IMAGE_NAME }}:latest"
+            fi
           elif [[ "$REF" == "staging" ]]; then
-            VERSION="acc"
-            TAGS="${{ env.IMAGE_NAME }}:acc"
+            VERSION="acc-${FLAVOR}"
+            TAGS="${{ env.IMAGE_NAME }}:acc-${FLAVOR}"
+            if [[ "$FLAVOR" == "classic" ]]; then
+              TAGS="${TAGS},${{ env.IMAGE_NAME }}:acc"
+            fi
           elif [[ "$REF" == "development" ]]; then
-            VERSION="dev"
-            TAGS="${{ env.IMAGE_NAME }}:dev"
+            VERSION="dev-${FLAVOR}"
+            TAGS="${{ env.IMAGE_NAME }}:dev-${FLAVOR}"
+            if [[ "$FLAVOR" == "gpu" ]]; then
+              TAGS="${TAGS},${{ env.IMAGE_NAME }}:dev"
+            fi
           elif [[ "$REF" == v* ]]; then
-            VERSION="$REF"
-            TAGS="${{ env.IMAGE_NAME }}:${VERSION}"
+            VERSION="${REF}-${FLAVOR}"
+            TAGS="${{ env.IMAGE_NAME }}:${REF}-${FLAVOR}"
           else
-            VERSION="dev-${GITHUB_SHA::7}"
-            TAGS="${{ env.IMAGE_NAME }}:dev"
+            VERSION="dev-${FLAVOR}-${GITHUB_SHA::7}"
+            TAGS="${{ env.IMAGE_NAME }}:dev-${FLAVOR}"
           fi
 
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
-          echo "📦 Building version: ${VERSION}" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Building flavor=${FLAVOR} version=${VERSION}" >> $GITHUB_STEP_SUMMARY
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -124,15 +147,16 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.${{ matrix.flavor }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.flavor }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.flavor }}
 
       - name: Image pushed summary
         if: github.event_name != 'pull_request'
         run: |
-          echo "🚀 **Docker images pushed to Docker Hub:**" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Docker images pushed to Docker Hub (${{ matrix.flavor }}):**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           IFS=',' read -ra TAG_ARRAY <<< "${{ steps.meta.outputs.tags }}"
           for tag in "${TAG_ARRAY[@]}"; do

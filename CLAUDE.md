@@ -3,10 +3,10 @@
 ## Project context
 
 Slanke presidio + SpaCy NER API voor PII-detectie in Nederlandse tekst.
-- **API**: `src/api/` — FastAPI, presidio, SpaCy `nl_core_news_lg` (dev) / `nl_core_news_md` (prod)
+- **API**: `src/api/` — FastAPI, presidio, SpaCy `nl_core_news_lg` (overal — lokaal, container, K8s)
 - **Patronen**: `src/api/utils/patterns.py` — regex-based recognizers
 - **Tests**: `tests/` — httpx/requests tegen draaiende API
-- **Deployment**: Dockerfile (Docker/Podman), Helm chart `charts/openanonymiser/`
+- **Deployment**: `Dockerfile.classic` / `Dockerfile.gpu` (per flavor) + kustomize onder `k8s/`
 
 ## Vaste gedragsregels
 
@@ -65,10 +65,9 @@ openspec list
 openspec status --change <naam>
 ```
 
-## SpaCy modellen
+## SpaCy model
 
-| Context | Model |
-|---|---|
-| Lokale dev (venv) | `nl_core_news_lg` |
-| Docker / productie | `nl_core_news_md` |
-| Config override | `DEFAULT_SPACY_MODEL=...` in `.env` |
+`nl_core_news_lg` overal — lokaal venv, Docker image, K8s. Wordt door
+`uv sync` geïnstalleerd vanuit `pyproject.toml` (hard dep). Override via
+`DEFAULT_SPACY_MODEL=...` env-var alleen voor experimenten; productie-pad
+is altijd lg.

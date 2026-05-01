@@ -1249,11 +1249,15 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi", extra = ["all"] },
-    { name = "gliner" },
     { name = "nl-core-news-lg" },
     { name = "presidio-analyzer" },
     { name = "presidio-anonymizer" },
     { name = "python-dotenv" },
+]
+
+[package.optional-dependencies]
+gpu = [
+    { name = "gliner" },
 ]
 
 [package.dev-dependencies]
@@ -1270,12 +1274,13 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", extras = ["all"], specifier = ">=0.115.12" },
-    { name = "gliner", specifier = ">=0.1.13" },
+    { name = "gliner", marker = "extra == 'gpu'", specifier = ">=0.1.13" },
     { name = "nl-core-news-lg", url = "https://github.com/explosion/spacy-models/releases/download/nl_core_news_lg-3.8.0/nl_core_news_lg-3.8.0-py3-none-any.whl" },
     { name = "presidio-analyzer", specifier = ">=2.2.358" },
     { name = "presidio-anonymizer", specifier = ">=2.2.358" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
 ]
+provides-extras = ["gpu"]
 
 [package.metadata.requires-dev]
 dev = [

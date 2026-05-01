@@ -100,7 +100,8 @@ basic-auth.auth
 test_results.json
 
 # Claude Code – lokaal tooling, niet relevant voor andere gebruikers
-.claude/
+.claude/*
+!.claude/file-write-allowlist
 CLAUDE.md
 
 # Venv
