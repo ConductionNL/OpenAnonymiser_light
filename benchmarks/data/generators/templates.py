@@ -55,7 +55,7 @@ TEMPLATES: list[str] = [
     "Huurovereenkomst: {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Tel: {PHONE_NUMBER}, IBAN {IBAN}.",
     "WOZ-bezwaar: eigenaar {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}, IBAN {IBAN}, KvK {KVK_NUMBER}.",
     "Overschrijving van {IBAN} naar {IBAN} op {DATE}, bedrag {MONEY}. Opdrachtgever: {PERSON}.",
-    "Schuldhulpverlening voor {PERSON}, inkomen {INCOME}, opleiding {EDUCATION_LEVEL}. Woont in {LOCATION}.",
+    "Schuldhulpverlening voor {PERSON}, inkomen {MONEY}, opleiding {EDUCATION_LEVEL}. Woont in {LOCATION}.",
     "Jaarrekening {ORGANIZATION}, KvK {KVK_NUMBER}. Omzet: {MONEY}. Gevestigd te {LOCATION}.",
     "Aanmaning aan {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Openstaand bedrag: {MONEY}.",
     "Creditnota {ORGANIZATION} d.d. {DATE} t.b.v. {PERSON}, IBAN {IBAN}.",
@@ -63,16 +63,16 @@ TEMPLATES: list[str] = [
     # ======================================================================
     # HR / Werk (10 templates)
     # ======================================================================
-    "Werkgever {ORGANIZATION} heeft werknemer {PERSON}, BSN {BSN}, aangenomen per {DATE} met een bruto maandinkomen van {INCOME}.",
-    "Arbeidsovereenkomst: {PERSON}, functie bij {ORGANIZATION} in {LOCATION}. Salaris: {INCOME}.",
+    "Werkgever {ORGANIZATION} heeft werknemer {PERSON}, BSN {BSN}, aangenomen per {DATE} met een maandinkomen van {MONEY}.",
+    "Arbeidsovereenkomst: {PERSON}, functie bij {ORGANIZATION} in {LOCATION}. Salaris: {MONEY}.",
     "Ontslagbrief: werknemer {PERSON}, BSN {BSN}, ontslagen per {DATE}. Werkgever: {ORGANIZATION}, {LOCATION}.",
     "HR-dossier {CASE_NO}: werknemer {PERSON}, BSN {BSN}. Werkzaam bij {ORGANIZATION} sinds {DATE}.",
-    "Medewerker {PERSON}, opleiding {EDUCATION_LEVEL}, werkt bij {ORGANIZATION} in {LOCATION} met inkomen {INCOME}.",
+    "Medewerker {PERSON}, opleiding {EDUCATION_LEVEL}, werkt bij {ORGANIZATION} in {LOCATION} met inkomen {MONEY}.",
     "Sollicitatie van {PERSON}, woonachtig te {STREET_ADDRESS}, {POSTCODE} {LOCATION}. BSN: {BSN}, e-mail: {EMAIL}.",
     "Referentie voor {PERSON}: werkzaam bij {ORGANIZATION} van {DATE} tot heden. Contact: {PHONE_NUMBER}.",
-    "Salarisstrook {DATE}: {PERSON}, BSN {BSN}, bruto {INCOME}. Werkgever {ORGANIZATION}.",
+    "Salarisstrook {DATE}: {PERSON}, BSN {BSN}, salaris {MONEY}. Werkgever {ORGANIZATION}.",
     "Stagiair {PERSON} ({EMAIL}) bij {ORGANIZATION}, opleiding {EDUCATION_LEVEL}, startdatum {DATE}.",
-    "Promotie van {PERSON} bij {ORGANIZATION} per {DATE}. Nieuw salaris: {INCOME}.",
+    "Promotie van {PERSON} bij {ORGANIZATION} per {DATE}. Nieuw salaris: {MONEY}.",
 
     # ======================================================================
     # IT / Netwerk (8 templates)
@@ -126,7 +126,7 @@ TEMPLATES: list[str] = [
     # Social / Profiel (8 templates)
     # ======================================================================
     "Profiel: {PERSON} ({SOCIAL_MEDIA}), opleiding {EDUCATION_LEVEL}, woont in {LOCATION}.",
-    "Klantprofiel: {PERSON} ({SOCIAL_MEDIA}), werkzaam bij {ORGANIZATION}, salaris {INCOME}.",
+    "Klantprofiel: {PERSON} ({SOCIAL_MEDIA}), werkzaam bij {ORGANIZATION}, salaris {MONEY}.",
     "{PERSON} uit {LOCATION} stemde op {POLITICAL_PARTY}. Opleiding: {EDUCATION_LEVEL}.",
     "{PERSON} uit buurt {LOCATION}, {LOCATION}, stemde op {POLITICAL_PARTY}. Nationaliteit: {NORP}.",
     "Account {SOCIAL_MEDIA}: {PERSON}, e-mail {EMAIL}, woonplaats {LOCATION}.",
@@ -138,7 +138,7 @@ TEMPLATES: list[str] = [
     # Mixed / Divers (10 templates)
     # ======================================================================
     "Boeking: {PERSON}, paspoort {ID_NO}, vlucht op {DATE}. Tel: {PHONE_NUMBER}, e-mail {EMAIL}.",
-    "Rapport: {PERSON} werkt bij {ORGANIZATION} en verdient {INCOME}. Woont in wijk {LOCATION} te {LOCATION}.",
+    "Rapport: {PERSON} werkt bij {ORGANIZATION} en verdient {MONEY}. Woont in wijk {LOCATION} te {LOCATION}.",
     "{PERSON}, BSN {BSN}, e-mail {EMAIL}, telefoon {PHONE_NUMBER}. Woonadres: {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
     "Gegevens: {PERSON}, geboren {DATE}, {NORP}. IBAN {IBAN}, BSN {BSN}.",
     "Leerling {PERSON}, {EDUCATION_LEVEL}, woont {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Vader werkt bij {ORGANIZATION}.",

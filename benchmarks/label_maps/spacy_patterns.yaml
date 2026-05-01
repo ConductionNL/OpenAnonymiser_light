@@ -36,7 +36,6 @@ VAT_NUMBER: VAT_NUMBER
 
 # Not supported by SpaCy+patterns — exclude from evaluation
 EDUCATION_LEVEL: null
-INCOME: null
 POLITICAL_PARTY: null
 STREET_ADDRESS: null
 SOCIAL_MEDIA: null

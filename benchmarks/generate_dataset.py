@@ -21,11 +21,11 @@ from collections import Counter
 from pathlib import Path
 
 # Ensure benchmarks package is importable
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from generators.entities import GENERATORS, generate
-from generators.templates import TEMPLATES
-from generators.edge_cases import EDGE_CASE_TEMPLATES, FALSE_POSITIVE_TRAPS
+from benchmarks.data.generators.entities import GENERATORS, generate
+from benchmarks.data.generators.templates import TEMPLATES
+from benchmarks.data.generators.edge_cases import EDGE_CASE_TEMPLATES, FALSE_POSITIVE_TRAPS
 
 # Regex to find {ENTITY_TYPE} placeholders
 _PLACEHOLDER_RE = re.compile(r"\{([A-Z_]+)\}")
@@ -36,7 +36,7 @@ TARGET_COUNTS: dict[str, int] = {
     "POSTCODE": 50, "EMAIL": 50, "PHONE_NUMBER": 50, "BSN": 50, "IBAN": 50,
     "KVK_NUMBER": 50, "VAT_NUMBER": 50, "LICENSE_PLATE": 50, "IP_ADDRESS": 50,
     "MAC_ADDRESS": 50, "DATE": 50, "DRIVERS_LICENSE": 50,
-    "ID_NO": 50, "CASE_NO": 50, "NORP": 50, "MONEY": 50, "INCOME": 50,
+    "ID_NO": 50, "CASE_NO": 50, "NORP": 50, "MONEY": 50,
     "EDUCATION_LEVEL": 50, "POLITICAL_PARTY": 50, "SOCIAL_MEDIA": 30,
 }
 

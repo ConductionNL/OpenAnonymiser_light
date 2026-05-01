@@ -108,7 +108,7 @@ EDGE_CASE_TEMPLATES: list[str] = [
     "De {NORP} {PERSON} woont in {LOCATION} en stemt op {POLITICAL_PARTY}.",
 
     # Money in various formats
-    "Salaris van {PERSON}: {INCOME}. Bonus: {MONEY}.",
+    "Salaris van {PERSON}: {MONEY}. Bonus: {MONEY}.",
 
     # Education levels in context
     "{PERSON} heeft een {EDUCATION_LEVEL} en werkt bij {ORGANIZATION}.",

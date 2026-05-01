@@ -338,23 +338,6 @@ def gen_money() -> str:
         lambda: f"EUR {amount}",
         lambda: f"{amount:,} euro".replace(",", "."),
         lambda: f"€{amount:,}".replace(",", "."),
-        lambda: f"{amount} euro bruto",
-        lambda: f"{amount} euro netto",
-    ]
-    return random.choice(formats)()
-
-
-def gen_income() -> str:
-    """Generate a Dutch income expression."""
-    amount = random.randint(1200, 12000)
-    formats = [
-        lambda: f"{amount} euro",
-        lambda: f"{amount} bruto",
-        lambda: f"{amount} netto",
-        lambda: f"{amount} euro bruto",
-        lambda: f"{amount} euro netto",
-        lambda: f"€{amount}",
-        lambda: f"EUR {amount}",
     ]
     return random.choice(formats)()
 
@@ -403,7 +386,6 @@ GENERATORS: dict[str, callable] = {
     "CASE_NO": gen_case_no,
     "NORP": gen_norp,
     "MONEY": gen_money,
-    "INCOME": gen_income,
     "EDUCATION_LEVEL": gen_education_level,
     "POLITICAL_PARTY": gen_political_party,
     "SOCIAL_MEDIA": gen_social_media,
