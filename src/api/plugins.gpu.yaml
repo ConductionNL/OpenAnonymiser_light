@@ -1,0 +1,111 @@
+# GPU flavor — spaCy NER + GLiNER (transformer-NER, multilingual PII).
+# Vereist GPU voor productie-latency (zie docs/architecture/flavors.md).
+# Doelgroep: managed SaaS met GPU-node-pool.
+#
+# Deze config bewaart de huidige `development`-state: GLiNER aan, alle
+# pattern-recognizers behalve MAC uitgeschakeld. De pattern-set wordt in
+# een vervolg-PR weer ingeschakeld zodra de design-decisie over
+# pattern/GLiNER overlap is uitgewerkt (zie design.md decision 4 en
+# `harness-run-2026-04-19.md`).
+
+language: nl
+
+ner:
+  type: spacy
+  # Default = lg voor lokale dev (CLAUDE.md regel). Containers zetten
+  # DEFAULT_SPACY_MODEL=nl_core_news_md in de image-env.
+  model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
+  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON]
+  ner_strength: 0.85
+  enabled: true
+
+context_aware_enhancer:
+  enabled: false
+  context_similarity_factor: 0.35
+  min_score_with_context_similarity: 0.4
+
+recognizers:
+  - name: DutchPhoneNumberRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchIBANRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchBSNRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchDateRecognizer
+    type: pattern
+    enabled: false
+
+  - name: EmailRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchPassportIdRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchDriversLicenseRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchVATRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchKvKRecognizer
+    type: pattern
+    enabled: false
+
+  - name: DutchLicensePlateRecognizer
+    type: pattern
+    enabled: false
+
+  - name: IPv4Recognizer
+    type: pattern
+    enabled: false
+
+  - name: CaseNumberRecognizer
+    type: pattern
+    enabled: false
+
+  - name: MACAddressRecognizer
+    type: pattern
+    enabled: true
+
+  - name: GLiNERRecognizer
+    type: gliner
+    enabled: true
+    model: "urchade/gliner_multi_pii-v1"
+    entity_mapping:
+      persoon: PERSON
+      naam: PERSON
+      locatie: LOCATION
+      woonplaats: LOCATION
+      gpe: LOCATION
+      gemeente: LOCATION
+      stad: LOCATION
+      wijk: LOCATION
+      buurt: LOCATION
+      straatnaam: STREET_ADDRESS
+      adres: STREET_ADDRESS
+      nationaliteit: NORP
+      religie: NORP
+      politieke_groep: NORP
+      politieke_partij: POLITICAL_PARTY
+      organisatie: ORGANIZATION
+      werkgever: ORGANIZATION
+      bedrijf: ORGANIZATION
+      inkomen: INCOME
+      salaris: INCOME
+      opleidingsniveau: EDUCATION_LEVEL
+      opleiding: EDUCATION_LEVEL
+    flat_ner: false
+    multi_label: true
+    threshold: 0.45
+    map_location: "cpu"
+    supported_language: "nl"

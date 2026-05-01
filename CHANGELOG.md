@@ -7,6 +7,27 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 ## [Unreleased]
 
 ### Added
+- **Build pipeline gesplitst in `classic` + `gpu` flavors** (`Dockerfile.classic` / `Dockerfile.gpu`, beide multi-stage met `python:3.12.11-slim-bookworm` runtime). Plugin-config-selectie via `PLUGINS_CONFIG` env-var.
+- `pyproject.toml` extras-split: `gliner` verhuisd van base `dependencies` naar `[project.optional-dependencies].gpu`. Gevolg: classic-image trekt geen torch / CUDA / triton mee → **6 GB → 1.1 GB**.
+- `src/api/plugins.classic.yaml` — alle Dutch-PII pattern recognizers `enabled: true`, geen GLiNER. Voor sidecar / Nextcloud / on-prem appliance.
+- `src/api/plugins.gpu.yaml` — huidige `development`-state geconserveerd: GLiNER + spaCy + alleen `MACAddressRecognizer`. Pattern-set wordt heringeschakeld in een vervolg-PR (zie design.md decision 4).
+- `.github/workflows/docker-build.yml` matrix — bouwt `classic` en `gpu` parallel per push. Tag-strategie: `:{tier}-{flavor}` plus default-aliases `:latest` (classic), `:acc` (classic), `:dev` (gpu — bewaart huidig dev-cluster-gedrag).
+- README: nieuwe Flavors-sectie met build-commando's en link naar `docs/architecture/flavors.md`.
+- `.env.example`: `PLUGINS_CONFIG` voorbeeld + uitleg.
+
+### Changed
+- **spaCy `nl_core_news_lg` overal** — lokaal venv, container, K8s. Was: lg lokaal, md in container. Beleid bijgesteld voor consistentie. `Dockerfile.{classic,gpu}` zetten `ENV DEFAULT_SPACY_MODEL=nl_core_news_lg`. Plugin yaml's defaulten nu op `${DEFAULT_SPACY_MODEL:-nl_core_news_lg}`. CLAUDE.md spaCy-sectie bijgewerkt.
+- `.github/workflows/docker-build.yml` test-job: `DEFAULT_SPACY_MODEL=nl_core_news_lg` (was md). Aparte md-pip-install-step verwijderd; `uv sync` installeert lg uit pyproject hard dep.
+- Lokale dev-pad voor wie GPU-flavor wil testen: `uv sync --extra gpu` (was: gliner standaard mee). Documenteer in README.
+
+### Notes
+- `Dockerfile` (single-stage) is hernoemd naar `Dockerfile.gpu` en herschreven als multi-stage. Multi-stage haalt `uv` + build-tools uit de runtime image.
+- `plugins.yaml` blijft als default fallback voor lokale dev (`uv run api.py` zonder `PLUGINS_CONFIG`); geen breaking change voor bestaande lokale workflows zolang `uv sync` zonder extras gedraaid wordt.
+- `k8s/overlays/{dev,acc,prod}/config.env` bijgewerkt naar `DEFAULT_SPACY_MODEL=nl_core_news_lg` (consistent met spaCy-overal-lg beleid). Image-tag in deze overlays blijft ongewijzigd (`:dev`/`:acc`/`:latest` via alias) — de switch naar `:{tier}-classic` is een vervolg-PR.
+- Geen andere k8s overlay-changes in deze PR: dev-overlay blijft `:dev` pullen (= gpu via alias) zodat huidig cluster-gedrag stabiel is.
+- `.claude/file-write-allowlist` toegevoegd: project-scoped carve-out voor de globale `.env`-write-block, specifiek voor `k8s/overlays/*/config.env` (configmap-inputs, geen secrets).
+- `contextual` flavor (verifier-architectuur) blijft uit scope tot de verifier-implementatie er is.
+
 - `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gpu`, `contextual`) met per flavor een expliciet deployment-model (self-contained / SaaS / SaaS+externe-deps)
 - `docs/architecture/entity-contract.md` — entity-matrix per flavor als bron-van-waarheid
 - `openspec/changes/split-into-3-flavors/` — proposal, design, tasks voor drie-smaken-split (ter review)
