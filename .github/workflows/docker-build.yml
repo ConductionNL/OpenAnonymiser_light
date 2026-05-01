@@ -4,7 +4,10 @@ on:
   push:
     branches: [ main, staging, development ]
   pull_request:
-    branches: [ main ]
+    # Build (zonder push) op PR's tegen alle release-branches, zodat
+    # Dockerfile-/dep-wijzigingen vóór merge worden gevalideerd.
+    # Push step respecteert al `github.event_name != 'pull_request'`.
+    branches: [ main, development, staging ]
   workflow_dispatch:
     inputs:
       ref:
@@ -37,7 +40,10 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv sync --group dev
+        # --extra gpu is nodig zolang de default plugins.yaml GLiNER op
+        # enabled heeft staan. Test-job draait tegen plugins.yaml (default),
+        # niet tegen plugins.classic.yaml of plugins.gpu.yaml.
+        run: uv sync --group dev --extra gpu
 
       - name: Start API
         run: |

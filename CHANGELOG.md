@@ -26,6 +26,8 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 - `k8s/overlays/{dev,acc,prod}/config.env` bijgewerkt naar `DEFAULT_SPACY_MODEL=nl_core_news_lg` (consistent met spaCy-overal-lg beleid). Image-tag in deze overlays blijft ongewijzigd (`:dev`/`:acc`/`:latest` via alias) — de switch naar `:{tier}-classic` is een vervolg-PR.
 - Geen andere k8s overlay-changes in deze PR: dev-overlay blijft `:dev` pullen (= gpu via alias) zodat huidig cluster-gedrag stabiel is.
 - `.claude/file-write-allowlist` toegevoegd: project-scoped carve-out voor de globale `.env`-write-block, specifiek voor `k8s/overlays/*/config.env` (configmap-inputs, geen secrets).
+- CI: PR-builds geactiveerd voor PR's tegen `development` en `staging` (`pull_request: branches:` uitgebreid). Build-step blijft `push: false` voor PR's, dus geen registry-bijwerken — alleen Dockerfile-validatie vóór merge.
+- CI: `feature-testing.yml` en `docker-build.yml` test-job draaien nu `uv sync ... --extra gpu`. Default `plugins.yaml` heeft GLiNER nog op enabled (legacy dev-state); zonder extra crashte API-startup na de pyproject extras-split.
 - `contextual` flavor (verifier-architectuur) blijft uit scope tot de verifier-implementatie er is.
 
 - `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gpu`, `contextual`) met per flavor een expliciet deployment-model (self-contained / SaaS / SaaS+externe-deps)
