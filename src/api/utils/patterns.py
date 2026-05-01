@@ -272,7 +272,7 @@ class IPv4Recognizer(PatternRecognizer):
 
 
 _DATE_CONTEXT = [
-    "datum", "geboortedatum", "geboren", "overlijdensdatum",
+    "op", "tot", "datum", "geboortedatum", "geboren", "overlijdensdatum",
     "ingangsdatum", "einddatum", "verloopdatum", "geldig",
 ]
 
