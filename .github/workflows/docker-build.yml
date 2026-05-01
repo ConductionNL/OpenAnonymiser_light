@@ -159,7 +159,7 @@ jobs:
       # severity HIGH+CRITICAL, ignore-unfixed (geen ruis over CVE's
       # zonder beschikbare patch). Faalt bij minstens één blocker.
       - name: Trivy image vulnerability scan
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: scan-target:${{ matrix.flavor }}
           severity: HIGH,CRITICAL

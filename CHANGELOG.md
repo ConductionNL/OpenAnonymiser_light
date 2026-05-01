@@ -28,7 +28,7 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 - `.claude/file-write-allowlist` toegevoegd: project-scoped carve-out voor de globale `.env`-write-block, specifiek voor `k8s/overlays/*/config.env` (configmap-inputs, geen secrets).
 - CI: PR-builds geactiveerd voor PR's tegen `development` en `staging` (`pull_request: branches:` uitgebreid). Build-step blijft `push: false` voor PR's, dus geen registry-bijwerken — alleen Dockerfile-validatie vóór merge.
 - CI: `feature-testing.yml` en `docker-build.yml` test-job draaien nu `uv sync ... --extra gpu`. Default `plugins.yaml` heeft GLiNER nog op enabled (legacy dev-state); zonder extra crashte API-startup na de pyproject extras-split.
-- CI: **Trivy image-scan toegevoegd** (`aquasecurity/trivy-action@0.36.0`) als gate vóór registry push. Build → load naar runner → scan → pas pushen als groen. Severity HIGH+CRITICAL, `ignore-unfixed: true`. Vult het gat dat bandit (source) en dependabot (pyproject) niet dekken: OS-packages en Python-wheel-binaries in de gebouwde image.
+- CI: **Trivy image-scan toegevoegd** (`aquasecurity/trivy-action@v0.36.0`) als gate vóór registry push. Build → load naar runner → scan → pas pushen als groen. Severity HIGH+CRITICAL, `ignore-unfixed: true`. Vult het gat dat bandit (source) en dependabot (pyproject) niet dekken: OS-packages en Python-wheel-binaries in de gebouwde image.
 - `contextual` flavor (verifier-architectuur) blijft uit scope tot de verifier-implementatie er is.
 
 - `docs/architecture/flavors.md` — stavaza + architecturele definitie van drie flavors (`classic`, `gpu`, `contextual`) met per flavor een expliciet deployment-model (self-contained / SaaS / SaaS+externe-deps)
