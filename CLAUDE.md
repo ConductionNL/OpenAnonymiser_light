@@ -17,7 +17,7 @@ Slanke presidio + SpaCy NER API voor PII-detectie in Nederlandse tekst.
 
 ### 2. Lokaal = vrij handelen
 - Lokale acties (testen, draaien, bouwen, lint) uitvoeren zonder bevestiging te vragen.
-- Bevestiging is **alleen** nodig voor: `git push`, `docker/podman push`, `helm install/upgrade`, `kubectl apply/delete`.
+- Bevestiging is **alleen** nodig voor: `git push`, `docker push`, `helm install/upgrade`, `kubectl apply/delete`.
 
 ### 3. Documentatie bijhouden
 - Als een endpoint, configuratie of gedrag verandert: update README.md en `.env.example` mee.
@@ -36,8 +36,8 @@ Slanke presidio + SpaCy NER API voor PII-detectie in Nederlandse tekst.
 
 ```
 uv run api.py                    →  lokaal (port 8080)
-docker/podman build              →  image bouwen
-docker/podman run                →  container smoke-test
+docker build                     →  image bouwen
+docker run                       →  container smoke-test
 helm template                    →  dry-run validatie
 helm install/upgrade             →  VRAAG EERST ← deploy-actie
 ```
@@ -51,7 +51,7 @@ uv run api.py --host 0.0.0.0 --port 8080
 # Tests draaien
 source .venv/bin/activate && pytest tests/ -q
 
-# Container bouwen (gebruik docker of podman)
+# Container bouwen
 docker build -t openanonymiser-light:latest .
 
 # Security scan
