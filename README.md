@@ -49,6 +49,18 @@ CI bouwt beide flavors per push naar `development`/`staging`/`main` met tags `:{
 | `POST /api/v1/analyze` | Detecteer PII — geeft entiteiten + posities terug |
 | `POST /api/v1/anonymize` | Anonimiseer tekst — vervangt PII door placeholders |
 
+## Pre-push gate (optioneel)
+
+Snelle checks vóór `git push` — uv-lock-sync + bandit HIGH severity. Geen API of containers nodig, draait in <1 s.
+
+```bash
+# Eenmalig installeren als git pre-push hook
+ln -sf ../../scripts/pre-push.sh .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
+Bypass tijdelijk met `git push --no-verify`. Volledige test-suite + container builds blijven CI's verantwoordelijkheid.
+
 ## Documentatie
 
 - [01 Getting Started](docs/01-getting-started.md) — installatie, eerste verzoek, entiteittypes
