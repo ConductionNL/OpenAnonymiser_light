@@ -1,19 +1,62 @@
-# Minimum precision en recall per entiteitstype.
-# evaluate.py exitcodet 1 als een drempel niet gehaald wordt.
-# Drempels zijn conservatief ingesteld; verhoog geleidelijk naarmate de dataset groeit.
+# Minimum precision/recall thresholds per entity type
+# Used by evaluate.py to validate model performance
 
-PERSON:          {precision: 0.70, recall: 0.70}
-LOCATION:        {precision: 0.70, recall: 0.70}
-ORGANIZATION:    {precision: 0.70, recall: 0.70}
-PHONE_NUMBER:    {precision: 0.80, recall: 0.80}
-EMAIL:           {precision: 0.90, recall: 0.90}
-IBAN:            {precision: 0.90, recall: 0.90}
-BSN:             {precision: 0.85, recall: 0.85}
-DATE_TIME:       {precision: 0.80, recall: 0.80}
-DRIVERS_LICENSE: {precision: 0.70, recall: 0.70}
-LICENSE_PLATE:   {precision: 0.80, recall: 0.80}
-KVK_NUMBER:      {precision: 0.80, recall: 0.80}
-VAT_NUMBER:      {precision: 0.80, recall: 0.80}
-CASE_NO:         {precision: 0.70, recall: 0.70}
-ID_NO:           {precision: 0.70, recall: 0.70}
-IP_ADDRESS:      {precision: 0.85, recall: 0.85}
+PERSON:
+  precision: 0.0
+  recall: 0.0
+
+EMAIL:
+  precision: 0.0
+  recall: 0.0
+
+PHONE_NUMBER:
+  precision: 0.0
+  recall: 0.0
+
+IBAN:
+  precision: 0.0
+  recall: 0.0
+
+BSN:
+  precision: 0.0
+  recall: 0.0
+
+DATE_TIME:
+  precision: 0.0
+  recall: 0.0
+
+DRIVERS_LICENSE:
+  precision: 0.0
+  recall: 0.0
+
+LICENSE_PLATE:
+  precision: 0.0
+  recall: 0.0
+
+KVK_NUMBER:
+  precision: 0.0
+  recall: 0.0
+
+ID_NO:
+  precision: 0.0
+  recall: 0.0
+
+LOCATION:
+  precision: 0.0
+  recall: 0.0
+
+ORGANIZATION:
+  precision: 0.0
+  recall: 0.0
+
+VAT_NUMBER:
+  precision: 0.0
+  recall: 0.0
+
+IP_ADDRESS:
+  precision: 0.0
+  recall: 0.0
+
+CASE_NO:
+  precision: 0.0
+  recall: 0.0

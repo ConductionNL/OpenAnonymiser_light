@@ -1,0 +1,90 @@
+# GPU flavor: spaCy + GLiNER (transformer-NER) + regex — vereist een
+# GPU-node voor acceptabele productie-latency (zie
+# docs/architecture/flavors.md). Op CPU werkt het, maar traag genoeg
+# om in productie als geblokkeerd te worden beschouwd.
+# Multi-stage: build tools blijven in builder; runtime bevat venv +
+# baked-in HF model cache + app-code.
+
+# ---------- builder ----------
+FROM python:3.12.11-bookworm AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+ENV UV_NO_CACHE=1
+ENV HF_HOME=/opt/hf-cache
+
+COPY pyproject.toml uv.lock ./
+
+# resolve from uv.lock only, no dev dependencies, gpu-extra=on (GLiNER + torch + CUDA).
+RUN uv sync --frozen --no-dev --no-cache --extra gpu
+
+# Cleanup van runtime-overbodige bagage:
+#   triton           — torch.compile JIT, niet nodig voor inference (~640 MB)
+#   tests/           — getest in CI, niet in image
+#   __pycache__      — py3.12 bouwt deze runtime opnieuw
+RUN rm -rf .venv/lib/python3.12/site-packages/triton \
+           .venv/lib/python3.12/site-packages/triton-*.dist-info && \
+    find .venv -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find .venv -type d -name tests -path "*/site-packages/*" -exec rm -rf {} + 2>/dev/null || true
+
+# Verifieer dat het lg model bruikbaar is (uv sync installeert het via
+# pyproject.toml hard dep).
+ARG FORCE_REBUILD_MAIN="2026-05-01T00:00Z"
+RUN set -eux; echo "$FORCE_REBUILD_MAIN" >/dev/null; \
+    .venv/bin/python -c "import spacy, importlib.metadata as m; spacy.load('nl_core_news_lg'); print('nl_core_news_lg ready'); [print(f'  {p}: {m.version(p)}') for p in ['presidio-analyzer','presidio-anonymizer','spacy']]"
+
+# Pre-download GLiNER + alleen de mdeberta TOKENIZER (niet de model weights)
+# naar de HF cache. GLiNER 0.1.13 instantieert AutoTokenizer voor mdeberta-v3-base
+# bij load; zonder offline tokenizer-files crasht het onder HF_HUB_OFFLINE=1.
+# Wel uit de cache: model.safetensors / pytorch_model.bin (~1.1 GB) — die gebruikt
+# GLiNER niet, het laadt zijn eigen weights uit gliner_multi_pii-v1.
+RUN mkdir -p "$HF_HOME" && \
+    .venv/bin/python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download('urchade/gliner_multi_pii-v1'); \
+snapshot_download('microsoft/mdeberta-v3-base', allow_patterns=['*.json', 'tokenizer*', 'spm.model'])"
+
+# Owner-shift naar de runtime UID/GID zodat de COPY in runtime stage klopt.
+RUN chown -R 1000:1000 /app /opt/hf-cache
+
+# ---------- runtime ----------
+FROM python:3.12.11-slim-bookworm AS runtime
+
+RUN groupadd -g 1000 presidio && useradd --no-log-init -u 1000 -g presidio -m presidio
+
+WORKDIR /app
+RUN chown presidio:presidio /app
+
+COPY --from=builder --chown=presidio:presidio /app/.venv /app/.venv
+COPY --from=builder --chown=presidio:presidio /opt/hf-cache /home/presidio/.cache/huggingface
+
+USER presidio
+
+# HF cache lokaal in user-home (read-only at runtime, models are baked in).
+ENV HF_HOME=/home/presidio/.cache/huggingface
+# Torch cache needs write access at runtime; point to writable /tmp.
+ENV TORCHINDUCTOR_CACHE_DIR=/tmp/torch_cache
+# Force offline mode at runtime — alle modellen zitten in de image.
+ENV HF_HUB_OFFLINE=1
+
+# Selecteer de gpu plugin-config (GLiNER + spaCy + regex).
+ENV PLUGINS_CONFIG=/app/src/api/plugins.gpu.yaml
+# spaCy lg overal — consistent met lokale dev en classic.
+ENV DEFAULT_SPACY_MODEL=nl_core_news_lg
+
+COPY --chown=presidio:presidio src/api ./src/api
+COPY --chown=presidio:presidio api.py ./
+COPY --chown=presidio:presidio scripts/healthcheck.py scripts/check_deps.py ./scripts/
+
+EXPOSE 8080
+
+HEALTHCHECK \
+    --interval=60s \
+    --timeout=5s \
+    --start-period=25s \
+    --retries=5 \
+  CMD [".venv/bin/python", "scripts/healthcheck.py", "--port", "8080"]
+
+CMD [".venv/bin/python", "api.py", "--host", "0.0.0.0", "--workers", "1", "--env", "production", "--port", "8080"]

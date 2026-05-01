@@ -5,6 +5,11 @@ description = "Dutch-based Anonymizer for PII detection in text (presidio + SpaC
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
+authors = [
+    { name = "Mark Westerweel", email = "mark.westerweel@conduction.nl" },
+    { name = "Razo van Berkel", email = "razo.van.berkel@centric.eu" },
+    { name = "Nena Meijer", email = "nena.meijer@centric.eu" },
+]
 dependencies = [
     "fastapi[all]>=0.115.12",
     "presidio-analyzer>=2.2.358",
@@ -12,9 +17,13 @@ dependencies = [
     "nl_core_news_lg",
     "python-dotenv>=1.1.0",
 ]
-authors = [
-    { name = "Mark Westerweel", email = "mark.westerweel@conduction.nl" },
-    { name = "Razo van Berkel", email = "razo.van.berkel@centric.eu" },
+
+[project.optional-dependencies]
+# gpu flavor: voegt GLiNER toe (trekt torch + CUDA-libs ~5 GB mee).
+# Lokaal gebruik:  uv sync --extra gpu
+# Classic image bouwt zonder deze extra → image ~1 GB i.p.v. 6 GB.
+gpu = [
+    "gliner>=0.1.13",
 ]
 
 [tool.uv.sources]
@@ -65,4 +74,7 @@ dev = [
     "httpx>=0.28.1",
     "presidio-evaluator",
     "pytest>=8.4.1",
+    "matplotlib>=3.9.0",
+    "plotly>=5.24.0",
+    "seaborn>=0.13.0",
 ]
