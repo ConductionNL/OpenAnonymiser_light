@@ -7,11 +7,12 @@ Benchmark- en evaluatieuitrusting voor Dutch PII-detectie in OpenAnonymiser. Mee
 De benchmark pipeline evalueert PII (Personally Identifiable Information) detectie door:
 
 1. **Gelabelde testdata** inladen (JSON met ground-truth entity spans)
-2. **PII-detectie** uitvoeren via de Presidio analyzer (pattern recognizers + optioneel NER/SpaCy/GLiNER)
+2. **PII-detectie** uitvoeren via de Presidio analyzer (pattern recognizers + SpaCy NER)
 3. **Span matching** met Intersection-over-Union (IoU) — minimaal 50% overlap standaard
-4. **Metriek berekening** per entiteitstype: True Positives, False Positives, False Negatives → Precision/Recall/F1
-5. **Visualisaties genereren**: confusion matrix, per-entity metrics, error breakdown
-6. **Drempels controleren**: optionele CI/CD validatie met minimale P/R vereisten
+4. **Label mapping** toepassen om dataset-labels te mappen op pipeline-labels
+5. **Metriek berekening** per entiteitstype: True Positives, False Positives, False Negatives → Precision/Recall/F1
+6. **Visualisaties genereren**: confusion matrix, per-entity metrics, error breakdown
+7. **Drempels controleren**: optionele CI/CD validatie met minimale P/R vereisten
 
 ### Waarom IoU-matching?
 
@@ -20,42 +21,77 @@ Character-level IoU matching is betrouwbaarder dan token-based matching voor irr
 - Prediction: `"Jansen"` (chars 8-13)
 - IoU = 5 overlapping chars / 13 total chars union = 0.38 (misses met standaard 0.5 threshold)
 
-## Snelstart
+## Huidige pipeline configuratie
 
-Configureer in `src/api/plugins.yaml` welke NLP recognizers/custom pattern recognizers ingezet worden tijdens de benchmark. Voorbeeld waar alleen gebenchmarked wordt met gliner:
+De standaard benchmark configuratie gebruikt **SpaCy NER + 13 custom pattern recognizers + Context Enhancer**.
+
+### plugins.yaml
 
 ```yaml
-# src/api/plugins.yaml
+ner:
+  type: spacy
+  model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
+  entities: [LOCATION, MONEY, NORP, ORGANIZATION, PERSON]
+  ner_strength: 0.85
+  enabled: true
+
+context_aware_enhancer:
+  enabled: true
+  context_similarity_factor: 0.35
+  min_score_with_context_similarity: 0.4
+
 recognizers:
-  spacy:
-    enabled: true  # ← Moet altijd true zijn, nodig voor de NLP engine init, als gliner enabled is wordt de spacy recognizer verwijderd zodat er alleen NER vanuit gliner komt
-  gliner:
+  - name: DutchPhoneNumberRecognizer
+    type: pattern
     enabled: true
-  pattern:
-    enabled: false
+  - name: DutchIBANRecognizer
+    type: pattern
+    enabled: true
+  # ... (13 pattern recognizers totaal)
 ```
 
-⚠️ **Belangrijk:** Standaard draait de API met SpaCy model (`nl_core_news_lg`) ingeschakeld. Voor **zuiver pattern-testen**, uncomment de twee regels in `src/api/services/text_analyzer.py` waar er wordt gechecked of de recognizer registry `has_gliner`.
+**Belangrijke configuratiekeuzes:**
 
-### Basis:
+| Keuze | Reden |
+|-------|-------|
+| DATE niet in SpaCy entities | SpaCy wint op score (0.85 > 0.50) van DutchDateRecognizer en hallucineert dates op niet-date tokens (nummers, IBAN's). DutchDateRecognizer is nu enige bron voor DATE. |
+| Context Enhancer aan | Essentieel voor DRIVERS_LICENSE en KVK_NUMBER — hun regex base scores (0.01) vallen zonder CE onder de eval threshold (0.4). |
+| GLiNER uit | Momenteel disabled; heeft onopgeloste problemen met PHONE_NUMBER (0% recall). |
+
+### Label maps
+
+Niet elke pipeline-configuratie ondersteunt dezelfde entity types. Label maps mappen dataset-labels naar pipeline-labels en sluiten niet-ondersteunde types uit van evaluatie.
+
+Beschikbare maps in `benchmarks/label_maps/`:
+- **`spacy_patterns.yaml`** — SpaCy NER + pattern recognizers (sluit niet-ondersteunde types uit)
+- **`gliner_patterns.yaml`** — GLiNER + pattern recognizers (identity map, alles ondersteund)
+
+Gebruik `--label-map` om een map mee te geven:
 ```bash
-uv run benchmarks/evaluate.py
+uv run benchmarks/evaluate.py --label-map benchmarks/label_maps/spacy_patterns.yaml
 ```
 
-Standaard draait de API met SpaCy model (`nl_core_news_lg`) ingeschakeld. Voor **zuiver pattern-testen**, zet SpaCy uit in `plugins.yaml` of gebruik `--pattern-only` om automatisch alleen pattern-based results te tellen.
+## Snelstart
 
-Output: Per-entiteit Precision/Recall/F1 tabel met TP/FP/FN counts.
+### SpaCy + patterns (standaard)
+```bash
+uv run benchmarks/evaluate.py \
+  --data benchmarks/data/dutch_generated_dataset.json \
+  --label-map benchmarks/label_maps/spacy_patterns.yaml
+```
 
 ### Met visualisaties en error analyse
 ```bash
 uv run benchmarks/evaluate.py \
-  --pattern-only \
+  --data benchmarks/data/dutch_generated_dataset.json \
+  --label-map benchmarks/label_maps/spacy_patterns.yaml \
   --plot \
   --html-report \
-  --show-errors
+  --show-errors \
+  --output-dir benchmarks/output/my_run
 ```
 
-Genereert in `benchmarks/output/eval_run/`:
+Genereert in de output directory:
 - `plots/confusion_matrix.html` — Interactive heatmap (ground truth vs predicted)
 - `plots/metrics.html` — Bar chart met P/R/F1 per entity type
 - `plots/error_distribution.html` — False Positives/Negatives breakdown
@@ -65,8 +101,9 @@ Genereert in `benchmarks/output/eval_run/`:
 
 | Optie | Type | Standaard | Beschrijving |
 |-------|------|-----------|--------------|
-| `--data` | path | `benchmarks/data/dutch_synth_multi_entity_dataset.json` | Pad naar gelabelde testdata (JSON) |
+| `--data` | path | `benchmarks/data/dutch_generated_dataset.json` | Pad naar gelabelde testdata (JSON) |
 | `--thresholds` | path | `benchmarks/thresholds.yaml` | Pad naar drempelwaarden (YAML) |
+| `--label-map` | path | geen | YAML label mapping (dataset→pipeline). Niet-gemapte labels worden uitgesloten. |
 | `--score-threshold` | float | `0.4` | Minimum Presidio confidence score (0.0-1.0) |
 | `--iou-threshold` | float | `0.5` | Minimum IoU voor span match als "correct" (0.0-1.0) |
 | `--fail-on-threshold` | flag | false | Exit code 1 als drempel niet gehaald (voor CI) |
@@ -75,42 +112,50 @@ Genereert in `benchmarks/output/eval_run/`:
 | `--plot-format` | choice | `html` | Plot format: `html` (interactief), `png` (statisch), `both` |
 | `--html-report` | flag | false | Genereer single-page HTML report met alle data en plots |
 | `--output-dir` | path | `benchmarks/output/eval_run` | Directory waar plots en reports opgeslagen worden |
-| `--pattern-only` | flag | false | Test alleen pattern recognizers (geen NER/SpaCy/GLiNER) |
 | `--entities` | string | None | Kommagescheiden entity types: `"PERSON,EMAIL,BSN"` (uppercase) |
+
+## Laatste benchmark resultaten
+
+**SpaCy (`nl_core_news_lg`) + patterns + Context Enhancer** op `dutch_generated_dataset.json` (491 zinnen na label-map filtering):
+
+```
+Entity                Precision   Recall       F1    TP   FP   FN
+--------------------------------------------------------------------------------
+BSN                        1.00     1.00     1.00    51    0    0
+CASE_NO                    0.97     1.00     0.98    56    2    0
+DATE                       1.00     1.00     1.00   227    0    0
+DRIVERS_LICENSE            1.00     1.00     1.00    50    0    0
+EMAIL                      1.00     0.96     0.98    74    0    3
+IBAN                       1.00     1.00     1.00    51    0    0
+ID_NO                      1.00     1.00     1.00    50    0    0
+IP_ADDRESS                 1.00     1.00     1.00    73    0    0
+KVK_NUMBER                 1.00     1.00     1.00    65    0    0
+LICENSE_PLATE              0.93     1.00     0.97    69    5    0
+LOCATION                   0.79     0.78     0.79   273   72   76
+MAC_ADDRESS                1.00     1.00     1.00    50    0    0
+MONEY                      0.00     0.00     0.00     0    0   52
+NORP                       0.85     0.66     0.74    51    9   26
+ORGANIZATION               0.35     0.49     0.41    67  127   69
+PERSON                     0.83     0.90     0.86   330   68   38
+PHONE_NUMBER               0.89     1.00     0.94    50    6    0
+POSTCODE                   0.99     1.00     1.00   114    1    0
+VAT_NUMBER                 1.00     1.00     1.00    50    0    0
+```
+
+**Observaties:**
+- Alle pattern-gebaseerde entiteiten scoren (nagenoeg) perfect (BSN, CASE_NO, DATE, EMAIL, IBAN, etc.)
+- DRIVERS_LICENSE en KVK_NUMBER halen 100% dankzij Context Enhancer (zonder CE: 0%)
+- MONEY heeft geen recognizer en scoort 0% — SpaCy MONEY is te onbetrouwbaar voor Nederlandse valuta-notatie
+- ORGANIZATION en LOCATION zijn zwak — inherente SpaCy NER limitatie op gesynthetiseerde data
+- NORP recall (66%) wordt beperkt door SpaCy's dekking van Nederlandse nationaliteiten/groeperingen
 
 ## Gebruik voorbeelden
 
-### 1. Snelle check (pattern recognizers)
-```bash
-uv run benchmarks/evaluate.py --pattern-only
-```
-
-Output:
-```
-Entity                Precision      Recall       F1     TP   FP   FN  Status
-BSN                        1.00       1.00     1.00      6    0    0  OK
-EMAIL                      1.00       1.00     1.00      9    0    0  OK
-PHONE_NUMBER               0.78       1.00     0.88      7    2    0  OK
-KVK_NUMBER                 0.70       1.00     0.82      7    3    0  OK
-```
-
-### 2. Full benchmark met visualisaties en report
+### 1. Threshold validation (CI/CD mode)
 ```bash
 uv run benchmarks/evaluate.py \
-  --pattern-only \
-  --plot both \
-  --html-report \
-  --output-dir benchmarks/output/eval_december_2024
-```
-
-Genereert PNG + HTML plots en single-page report.
-
-### 3. Threshold validation (CI/CD mode)
-```bash
-uv run benchmarks/evaluate.py \
-  --fail-on-threshold \
-  --score-threshold 0.35 \
-  --iou-threshold 0.4
+  --label-map benchmarks/label_maps/spacy_patterns.yaml \
+  --fail-on-threshold
 ```
 
 Exit codes:
@@ -118,7 +163,7 @@ Exit codes:
 - **1** = een of meer drempels niet gehaald (als `--fail-on-threshold`)
 - **2** = config/data fout
 
-### 4. Specifieke entiteiten debuggen
+### 2. Specifieke entiteiten debuggen
 ```bash
 uv run benchmarks/evaluate.py \
   --entities "PHONE_NUMBER,KVK_NUMBER" \
@@ -126,16 +171,14 @@ uv run benchmarks/evaluate.py \
   --plot
 ```
 
-### 5. Strengere matching (higher IoU requirement)
+### 3. Strengere matching (higher IoU requirement)
 ```bash
 uv run benchmarks/evaluate.py \
   --iou-threshold 0.75 \
   --show-errors
 ```
 
-Minder false positives, maar meer false negatives op partial spans.
-
-### 6. Custom dataset en output folder
+### 4. Custom dataset en output folder
 ```bash
 uv run benchmarks/evaluate.py \
   --data benchmarks/data/dutch_pii_sentences.json \
@@ -143,13 +186,16 @@ uv run benchmarks/evaluate.py \
   --plot --html-report --show-errors
 ```
 
-## Testdata beheren
+## Testdata
 
-### Gelabelde datasets
+### Beschikbare datasets
 
-Beschikbare datasets in `benchmarks/data/`:
-- **`dutch_pii_sentences.json`** — Gesynthetiseerd (klein), geen multi-entity zinnen
-- **`dutch_synth_multi_entity_dataset.json`** — Gesynthetiseerd multi-entity (48 zinnen, 246 spans)
+| Dataset | Zinnen | Beschrijving |
+|---------|--------|--------------|
+| `dutch_generated_dataset.json` | 534 | Primair — gesynthetiseerd multi-entity (19 entity types) |
+| `dutch_edge_cases_dataset.json` | — | Edge cases voor grensgevallen |
+| `dutch_pii_sentences.json` | klein | Legacy, enkele entiteiten per zin |
+| `dutch_synth_multi_entity_dataset.json` | 48 | Legacy multi-entity (246 spans) |
 
 ### Dataset structuur
 
@@ -178,9 +224,7 @@ Beschikbare datasets in `benchmarks/data/`:
 **Regels:**
 - `start_position` en `end_position` zijn 0-gebaseerde karakter-indexen
 - `entity_value` moet exact gelijk zijn aan `full_text[start:end]`
-- Zorg dat alle gemarkeerde entiteiten in de tabel staan
 - Test positie met `text[start:end]` voordat je de JSON submitteert
-
 
 ## Drempels (thresholds.yaml)
 
@@ -214,83 +258,6 @@ Na succesvolle run:
 uv run benchmarks/evaluate.py --fail-on-threshold
 ```
 
-## Configuratie via plugins.yaml
-
-De benchmark-evaluator leest **altijd** `src/api/plugins.yaml` om te bepalen welke recognizers actief zijn. Dit beïnvloedt welke entity types beschikbaar zijn en hoe `--pattern-only` werkt.
-
-### plugins.yaml structuur
-
-```yaml
-# src/api/plugins.yaml
-recognizers:
-  spacy:
-    enabled: false        # SpaCy NER (PERSON, LOCATION, ORGANIZATION, etc.)
-    model: "nl_core_news_lg"
-    
-  gliner:
-    enabled: false        # GLiNER (advanced NER, optioneel)
-    
-  pattern:
-    enabled: true         # Pattern recognizers (alle custompatterns)
-    recognizers:
-      - "DutchBSNRecognizer"
-      - "DutchEmailRecognizer"
-      - "DutchPhoneRecognizer"
-      # etc.
-```
-
-### Effect op evaluatie
-
-| Configuratie | `--pattern-only` resultaat | Volledige run resultaat |
-|---|---|---|
-| `spacy: false, pattern: true` | Alleen patterns | Nur patterns |
-| `spacy: true, pattern: true` | Alleen patterns (gefilterd) | Patterns + NER types |
-| `spacy: false, pattern: false` | Geen resultaten (FN overal) | Geen resultaten |
-
-### Gebruiksscenario's
-
-**Scenario 1: Pattern-only benchmark**
-```yaml
-recognizers:
-  spacy:
-    enabled: false
-  pattern:
-    enabled: true
-```
-```bash
-uv run benchmarks/evaluate.py --pattern-only
-# → Meet BSN, EMAIL, PHONE, etc. (patterns alleen)
-```
-
-**Scenario 2: Full benchmark (patterns + NER)**
-```yaml
-recognizers:
-  spacy:
-    enabled: true
-  pattern:
-    enabled: true
-```
-```bash
-uv run benchmarks/evaluate.py --show-errors
-# → Meet PERSON, LOCATION, EMAIL, BSN, PHONE, etc. (alles)
-```
-
-**Scenario 3: Alleen specifieke patterns**
-```yaml
-recognizers:
-  spacy:
-    enabled: false
-  pattern:
-    enabled: true
-    recognizers:
-      - "DutchBSNRecognizer"
-      - "DutchEmailRecognizer"
-      - "DutchPhoneRecognizer"
-```
-```bash
-uv run benchmarks/evaluate.py --pattern-only
-# → Meet alleen BSN, EMAIL, PHONE (subset)
-
 ## Output begrijpen
 
 ### Tabel (console)
@@ -309,7 +276,7 @@ KVK_NUMBER                 0.70      1.00     0.82      7    3    0  FAIL (min p
 - **FN** (False Negatives) = Gemist (was in ground truth, model miste het)
 - **Precision** = TP / (TP + FP) — hoe betrouwbaar zijn detecties?
 - **Recall** = TP / (TP + FN) — hoeveel entiteiten worden gevonden?
-- **F1** = Harmonisch gemiddelde P en R
+- **F1** = 2 × (P × R) / (P + R) — balans tussen precision en recall; straft eenzijdig hoge P of R af
 
 ### Confusion Matrix (HTML)
 
@@ -359,17 +326,28 @@ benchmarks/
 ├── evaluate.py                       # CLI entry point (click decorators)
 ├── evaluator.py                      # CustomEvaluator: IoU matching + metrics
 ├── plotter.py                        # EvaluationPlotter: matplotlib + plotly
+├── generate_dataset.py               # Dataset generator (Faker-based)
+├── validate_dataset.py               # Dataset validatie (span-checks)
 ├── thresholds.yaml                   # Optionele P/R drempels per entity
+├── label_maps/
+│   ├── spacy_patterns.yaml           # Label map: SpaCy NER + pattern recognizers
+│   └── gliner_patterns.yaml          # Label map: GLiNER + pattern recognizers
 ├── data/
-│   ├── dutch_pii_sentences.json                    # Dataset v1
-│   └── dutch_synth_multi_entity_dataset.json       # Dataset v2 (multi-entity)
+│   ├── dutch_generated_dataset.json  # Primair — 491 zinnen, 2262 spans, 23 entity types
+│   ├── dutch_edge_cases_dataset.json # Edge cases — 135 zinnen, 264 spans, 23 entity types
+│   └── generators/
+│       ├── __init__.py
+│       ├── edge_cases.py             # Edge case generatie logica
+│       ├── entities.py               # Entity definities en Faker providers
+│       └── templates.py              # Zin-templates per domein
 └── output/
-    └── eval_run_/ 
+    └── eval_run_/
         ├── plots/
         │   ├── confusion_matrix.html/.png
         │   ├── metrics.html
         │   └── error_distribution.html
-        └── report.html
+        ├── report.html
+        └── eval_report.txt           # Overzicht error analysis
 ```
 
 ### CustomEvaluator
@@ -391,21 +369,3 @@ benchmarks/
 - `plot_metrics_bars()` → Grouped bar chart (Precision/Recall/F1)
 - `plot_error_distribution()` → FP/FN stacked bars per entity
 - `generate_html_report()` → Single-page report
-
-## Troubleshooting
-
-| Probleem | Oorzaak | Oplossing |
-|----------|---------|-----------|
-| `ModuleNotFoundError: No module named 'src.api'` | Python path niet ingesteld | Voer `uv run` uit vanuit project root |
-| `No predictions / alle FN` | Model/API werkt niet of plugins.yaml issue | Check of API draait (`uv run api.py`), plugin config in `src/api/plugins.yaml` correct (spacy/pattern `enabled` check) |
-| `--pattern-only geeft NER results` | SpaCy nog ingeschakeld in plugins.yaml | Zet `spacy: enabled: false` in `src/api/plugins.yaml` |
-| `Lage scores op patterns` | Pattern regex bug | Controleer `src/api/utils/patterns.py` |
-| `Visualisaties niet gegenereerd` | `--plot` flag vergeten | Voeg `--plot --html-report` toe |
-| `YAML parse error in thresholds.yaml` | Indentatie fout | Gebruik spaces (geen tabs); valideer met `yamllint` |
-| `FileNotFoundError: data path` | Dataset pad verkeerd | Check `--data` argument of bestand bestaat |
-
-## Zie ook
-
-- [docs/02-api-reference.md](../docs/02-api-reference.md) — API endpoints
-- [src/api/utils/patterns.py](../src/api/utils/patterns.py) — Pattern recognizer definities
-- [CLAUDE.md](../CLAUDE.md) — Project conventions
