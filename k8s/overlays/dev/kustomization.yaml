@@ -10,7 +10,7 @@ namePrefix: dev-
 
 images:
   - name: docker.io/mwest2020/openanonymiser-light
-    newTag: dev
+    newTag: dev-classic
 
 patches:
   - patch: |-

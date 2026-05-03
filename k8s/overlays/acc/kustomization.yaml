@@ -10,7 +10,7 @@ namePrefix: acc-
 
 images:
   - name: docker.io/mwest2020/openanonymiser-light
-    newTag: acc
+    newTag: acc-classic
 
 patches:
   - patch: |-

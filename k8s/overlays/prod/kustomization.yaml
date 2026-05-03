@@ -10,7 +10,7 @@ namePrefix: prod-
 
 images:
   - name: docker.io/mwest2020/openanonymiser-light
-    newTag: latest
+    newTag: classic-latest
 
 patches:
   - patch: |-
