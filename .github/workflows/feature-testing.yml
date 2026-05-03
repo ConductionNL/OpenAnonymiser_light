@@ -27,14 +27,17 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        # --extra gpu is nodig zolang de default plugins.yaml GLiNER op
-        # enabled heeft staan (legacy dev-state). Zodra de default config
-        # naar plugins.classic.yaml shift kan dit weer naar --all-groups.
+        # --extra gpu is nodig zolang we ook de gpu-flavor willen kunnen
+        # smoke-testen. Voor classic-only zou --all-groups voldoen.
         run: uv sync --all-groups --extra gpu
 
       - name: Start API for testing
+        # Draait tegen de classic plugin-config zodat alle pattern-recognizers
+        # (BSN, IBAN, e-mail, etc.) actief zijn — anders skipt pytest 29 tests
+        # met "entity type wordt niet ondersteund". Default plugins.yaml is
+        # legacy "incomplete gpu" state met regex disabled.
         run: |
-          uv run api.py &
+          PLUGINS_CONFIG=src/api/plugins.classic.yaml uv run api.py &
           echo "API_PID=$!" >> $GITHUB_ENV
           
           # Wait for API to be ready (with healthcheck loop, max 60 seconds)
