@@ -15,7 +15,10 @@ ner:
   # Default = lg voor lokale dev (CLAUDE.md regel). Containers zetten
   # DEFAULT_SPACY_MODEL=nl_core_news_md in de image-env.
   model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
-  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON]
+  # Presidio-side namen, niet raw spaCy types — anders rapporteert
+  # SpacyRecognizer alleen "LOC"/"ORG" en faalt /api/v1/analyze met
+  # `entities: ["LOCATION"]` op "No matching recognizers".
+  entities: [DATE, FAC, LOCATION, MONEY, NORP, ORGANIZATION, PERSON]
   ner_strength: 0.85
   enabled: true
 

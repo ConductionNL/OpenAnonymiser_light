@@ -13,7 +13,10 @@ language: nl
 ner:
   type: spacy
   model: ${DEFAULT_SPACY_MODEL:-nl_core_news_lg}
-  entities: [DATE, FAC, GPE, LOC, MONEY, NORP, ORG, PERSON] # added more entities
+  # Presidio-side namen — request voor `["LOCATION"]` zou anders 500 geven
+  # ("No matching recognizers"). LOC/GPE/ORG zijn raw spaCy-types; mapping
+  # naar LOCATION/ORGANIZATION gebeurt in plugin_loader.py:144.
+  entities: [DATE, FAC, LOCATION, MONEY, NORP, ORGANIZATION, PERSON]
   ner_strength: 0.85
   enabled: true
 

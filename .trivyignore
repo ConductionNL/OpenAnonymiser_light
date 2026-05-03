@@ -1,0 +1,18 @@
+# OpenAnonymiser .trivyignore
+# Tijdelijke uitzonderingen voor CVE's waar de fix wel beschikbaar is upstream
+# maar nog niet in onze base-image-keten landt. Sunset-datum verplicht — review
+# uiterlijk dan, en check of fixen inmiddels via apt-get dist-upgrade meekomen.
+
+# OpenSSL 3.0.x — fixes zijn in Debian-security-archive (3.0.18-1~deb12u2 en
+# 3.0.19-1~deb12u2). Ze zitten nog niet in de python:3.12-slim-bookworm base
+# die we trekken; apt-get dist-upgrade kan ze oppakken zodra het Debian-mirror
+# de patches indexeert. Re-evalueren bij volgende build of na sunset.
+# Sunset: 2026-05-17 (twee weken)
+CVE-2025-15467
+CVE-2026-31789
+CVE-2025-69419
+CVE-2025-69421
+CVE-2026-28387
+CVE-2026-28388
+CVE-2026-28389
+CVE-2026-28390
