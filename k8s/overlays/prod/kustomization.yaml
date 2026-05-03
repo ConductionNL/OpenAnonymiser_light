@@ -9,7 +9,7 @@ resources:
 namePrefix: prod-
 
 images:
-  - name: docker.io/mwest2020/openanonymiser-light
+  - name: docker.io/conductiondeploy/openanonymiser-light
     newTag: latest
 
 patches:

@@ -112,3 +112,6 @@ logs/
 
 # Basic auth credentials (plain text htpasswd, never commit)
 basic-auth.auth
+
+# Docker Hub SA-credentials voor scripts/setup-dockerhub-secrets.sh
+.env.dockerhub
