@@ -20,6 +20,11 @@ COPY pyproject.toml uv.lock ./
 # resolve from uv.lock only, no dev dependencies, gpu-extra=on (GLiNER + torch + CUDA).
 RUN uv sync --frozen --no-dev --no-cache --extra gpu
 
+# CVE-fix voor wheel-metadata-deps die niet in uv.lock zitten:
+#   jaraco.context  CVE-2026-23949 (path traversal in tar archives)
+#   wheel           CVE-2026-24049 (priv-esc via malicious wheel)
+RUN uv pip install --upgrade --no-deps "jaraco.context>=6.1.0" "wheel>=0.46.2"
+
 # Cleanup van runtime-overbodige bagage:
 #   triton           — torch.compile JIT, niet nodig voor inference (~640 MB)
 #   tests/           — getest in CI, niet in image

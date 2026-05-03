@@ -17,6 +17,13 @@ COPY pyproject.toml uv.lock ./
 # Classic = base + spaCy lg + regex; geen GLiNER, geen torch, geen CUDA.
 RUN uv sync --frozen --no-dev --no-cache
 
+# CVE-fix voor wheel-metadata-deps die niet in uv.lock zitten:
+#   jaraco.context  CVE-2026-23949 (path traversal in tar archives)
+#   wheel           CVE-2026-24049 (priv-esc via malicious wheel)
+# Beide zijn build-system metadata; --no-deps voorkomt transitive bumps.
+# `uv pip install` werkt op de bestaande .venv zonder pip te vereisen.
+RUN uv pip install --upgrade --no-deps "jaraco.context>=6.1.0" "wheel>=0.46.2"
+
 # Verifieer dat het lg model bruikbaar is.
 ARG FORCE_REBUILD_MAIN="2026-05-01T00:00Z"
 RUN set -eux; echo "$FORCE_REBUILD_MAIN" >/dev/null; \
