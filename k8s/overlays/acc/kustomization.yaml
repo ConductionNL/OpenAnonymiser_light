@@ -9,8 +9,8 @@ resources:
 namePrefix: acc-
 
 images:
-  - name: docker.io/mwest2020/openanonymiser-light
-    newTag: acc-classic
+  - name: docker.io/conductiondeploy/openanonymiser-light
+    newTag: acc
 
 patches:
   - patch: |-
