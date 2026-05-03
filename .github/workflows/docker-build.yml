@@ -40,14 +40,16 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        # --extra gpu is nodig zolang de default plugins.yaml GLiNER op
-        # enabled heeft staan. Test-job draait tegen plugins.yaml (default),
-        # niet tegen plugins.classic.yaml of plugins.gpu.yaml.
+        # --extra gpu zodat we ook de gpu-flavor smoke-testen kunnen runnen.
         run: uv sync --group dev --extra gpu
 
       - name: Start API
+        # Draait tegen de classic plugin-config zodat alle pattern-recognizers
+        # (BSN, IBAN, e-mail, etc.) actief zijn — anders skipt pytest 29 tests
+        # met "entity type wordt niet ondersteund". Default plugins.yaml heeft
+        # alle regex op `enabled: false` (legacy state).
         run: |
-          DEFAULT_SPACY_MODEL=nl_core_news_lg uv run api.py &
+          PLUGINS_CONFIG=src/api/plugins.classic.yaml DEFAULT_SPACY_MODEL=nl_core_news_lg uv run api.py &
           echo "API_PID=$!" >> $GITHUB_ENV
 
           # Wait for API to be ready (with healthcheck loop, max 60 seconds)
