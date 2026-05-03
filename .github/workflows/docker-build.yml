@@ -17,7 +17,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: mwest2020/openanonymiser-light
+  IMAGE_NAME: conductiondeploy/openanonymiser-light
 
 jobs:
   test:
