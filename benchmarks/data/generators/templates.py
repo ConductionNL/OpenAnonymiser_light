@@ -23,16 +23,16 @@ TEMPLATES: list[str] = [
     # ======================================================================
     # Juridisch (10 templates)
     # ======================================================================
-    "Verdachte {PERSON}, woonachtig {STREET_ADDRESS}, {POSTCODE} {LOCATION}, is aangehouden op {DATE}.",
+    "Verdachte {PERSON}, woonachtig {FULL_ADDRESS}, is aangehouden op {DATE}.",
     "Zaak {CASE_NO} betreft {PERSON}, nationaliteit {NORP}. Paspoort {ID_NO}.",
-    "Proces-verbaal {CASE_NO}: verdachte {PERSON}, rijbewijs {DRIVERS_LICENSE}, kenteken {LICENSE_PLATE}, woonachtig {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
+    "Proces-verbaal {CASE_NO}: verdachte {PERSON}, rijbewijs {DRIVERS_LICENSE}, kenteken {LICENSE_PLATE}, woonachtig {FULL_ADDRESS}.",
     "In zaak {CASE_NO} is {PERSON} veroordeeld op {DATE} door de rechtbank in {LOCATION}.",
     "De verdachte {PERSON}, geboren op {DATE}, heeft woonplaats {LOCATION} en is {NORP}.",
     "Bezwaarschrift {CASE_NO} ingediend door {PERSON}, {NORP}. Woonplaats: {LOCATION}.",
     "De rechtbank {LOCATION} behandelt zaak {CASE_NO} tegen {PERSON} op {DATE}.",
-    "Getuige {PERSON} uit {LOCATION} verklaarde op {DATE} dat de verdachte {PERSON} werd gezien bij {STREET_ADDRESS}.",
+    "Getuige {PERSON} uit {LOCATION} verklaarde op {DATE} dat de verdachte {PERSON} werd gezien bij {LOCATION}.",
     "In het kader van {CASE_NO} is beslag gelegd op het voertuig met kenteken {LICENSE_PLATE}, eigendom van {PERSON}.",
-    "Aangifte door {PERSON}, {NORP}, woonachtig {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Contact: {PHONE_NUMBER}.",
+    "Aangifte door {PERSON}, {NORP}, woonachtig {FULL_ADDRESS}. Contact: {PHONE_NUMBER}.",
 
     # ======================================================================
     # Medisch (8 templates)
@@ -52,12 +52,12 @@ TEMPLATES: list[str] = [
     "Factuur van {ORGANIZATION}, KvK {KVK_NUMBER}, BTW {VAT_NUMBER}. Betaal naar {IBAN} voor {DATE}.",
     "Belastingaangifte: BTW-nummer {VAT_NUMBER}, KvK {KVK_NUMBER}, onderneming {ORGANIZATION} te {LOCATION}.",
     "Subsidieaanvraag door {ORGANIZATION}, KvK {KVK_NUMBER}, BTW {VAT_NUMBER}, werkzaam in {LOCATION}.",
-    "Huurovereenkomst: {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Tel: {PHONE_NUMBER}, IBAN {IBAN}.",
-    "WOZ-bezwaar: eigenaar {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}, IBAN {IBAN}, KvK {KVK_NUMBER}.",
+    "Huurovereenkomst: {PERSON}, {FULL_ADDRESS}. Tel: {PHONE_NUMBER}, IBAN {IBAN}.",
+    "WOZ-bezwaar: eigenaar {PERSON}, {FULL_ADDRESS}, IBAN {IBAN}, KvK {KVK_NUMBER}.",
     "Overschrijving van {IBAN} naar {IBAN} op {DATE}, bedrag {MONEY}. Opdrachtgever: {PERSON}.",
     "Schuldhulpverlening voor {PERSON}, inkomen {MONEY}, opleiding {EDUCATION_LEVEL}. Woont in {LOCATION}.",
     "Jaarrekening {ORGANIZATION}, KvK {KVK_NUMBER}. Omzet: {MONEY}. Gevestigd te {LOCATION}.",
-    "Aanmaning aan {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Openstaand bedrag: {MONEY}.",
+    "Aanmaning aan {PERSON}, {FULL_ADDRESS}. Openstaand bedrag: {MONEY}.",
     "Creditnota {ORGANIZATION} d.d. {DATE} t.b.v. {PERSON}, IBAN {IBAN}.",
 
     # ======================================================================
@@ -68,7 +68,7 @@ TEMPLATES: list[str] = [
     "Ontslagbrief: werknemer {PERSON}, BSN {BSN}, ontslagen per {DATE}. Werkgever: {ORGANIZATION}, {LOCATION}.",
     "HR-dossier {CASE_NO}: werknemer {PERSON}, BSN {BSN}. Werkzaam bij {ORGANIZATION} sinds {DATE}.",
     "Medewerker {PERSON}, opleiding {EDUCATION_LEVEL}, werkt bij {ORGANIZATION} in {LOCATION} met inkomen {MONEY}.",
-    "Sollicitatie van {PERSON}, woonachtig te {STREET_ADDRESS}, {POSTCODE} {LOCATION}. BSN: {BSN}, e-mail: {EMAIL}.",
+    "Sollicitatie van {PERSON}, woonachtig te {FULL_ADDRESS}. BSN: {BSN}, e-mail: {EMAIL}.",
     "Referentie voor {PERSON}: werkzaam bij {ORGANIZATION} van {DATE} tot heden. Contact: {PHONE_NUMBER}.",
     "Salarisstrook {DATE}: {PERSON}, BSN {BSN}, salaris {MONEY}. Werkgever {ORGANIZATION}.",
     "Stagiair {PERSON} ({EMAIL}) bij {ORGANIZATION}, opleiding {EDUCATION_LEVEL}, startdatum {DATE}.",
@@ -89,26 +89,26 @@ TEMPLATES: list[str] = [
     # ======================================================================
     # Overheid (8 templates)
     # ======================================================================
-    "Vergunningaanvraag {CASE_NO} door {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
+    "Vergunningaanvraag {CASE_NO} door {PERSON}, {FULL_ADDRESS}.",
     "WOO-verzoek {CASE_NO}: ingediend door {PERSON} op {DATE}. Betreft documenten van {ORGANIZATION}.",
-    "Klacht over {ORGANIZATION}, gevestigd {STREET_ADDRESS}, {POSTCODE} {LOCATION}. KvK: {KVK_NUMBER}.",
+    "Klacht over {ORGANIZATION}, gevestigd {FULL_ADDRESS}. KvK: {KVK_NUMBER}.",
     "Burgerzaken {LOCATION}: identiteitsbewijs {ID_NO} afgegeven aan {PERSON} op {DATE}.",
     "Huwelijksakte: {PERSON} en {PERSON}, gehuwd op {DATE} te {LOCATION}.",
-    "Uitkeringsaanvraag door {PERSON}, BSN {BSN}. Woonachtig {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
-    "Gemeentelijke registratie: {PERSON}, BSN {BSN}, verhuisd naar {STREET_ADDRESS}, {POSTCODE} {LOCATION} per {DATE}.",
+    "Uitkeringsaanvraag door {PERSON}, BSN {BSN}. Woonachtig {FULL_ADDRESS}.",
+    "Gemeentelijke registratie: {PERSON}, BSN {BSN}, verhuisd naar {FULL_ADDRESS} per {DATE}.",
     "Subsidietoekenning aan {ORGANIZATION}, KvK {KVK_NUMBER}, in {LOCATION} voor {MONEY}.",
 
     # ======================================================================
     # Wonen / Verhuizing (8 templates)
     # ======================================================================
-    "Verhuisbericht: {PERSON} van {STREET_ADDRESS}, {POSTCODE} {LOCATION} naar {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
-    "Koopovereenkomst woning: {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Koopsom: {MONEY}.",
-    "Adreswijziging {PERSON}: nieuw adres {STREET_ADDRESS}, {POSTCODE} {LOCATION}. E-mail: {EMAIL}.",
-    "Huurder {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}, telefoon {PHONE_NUMBER}.",
-    "Energiecontract op naam van {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. IBAN: {IBAN}.",
-    "Inschrijving {PERSON} op adres {STREET_ADDRESS}, {POSTCODE} {LOCATION} per {DATE}. BSN: {BSN}.",
-    "Bewonersbrief aan {PERSON}, {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Betreft: renovatie vanaf {DATE}.",
-    "Taxatierapport: {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Eigenaar {PERSON}. Waarde: {MONEY}.",
+    "Verhuisbericht: {PERSON} van {FULL_ADDRESS} naar {FULL_ADDRESS}.",
+    "Koopovereenkomst woning: {PERSON}, {FULL_ADDRESS}. Koopsom: {MONEY}.",
+    "Adreswijziging {PERSON}: nieuw adres {FULL_ADDRESS}. E-mail: {EMAIL}.",
+    "Huurder {PERSON}, {FULL_ADDRESS}, telefoon {PHONE_NUMBER}.",
+    "Energiecontract op naam van {PERSON}, {FULL_ADDRESS}. IBAN: {IBAN}.",
+    "Inschrijving {PERSON} op adres {FULL_ADDRESS} per {DATE}. BSN: {BSN}.",
+    "Bewonersbrief aan {PERSON}, {FULL_ADDRESS}. Betreft: renovatie vanaf {DATE}.",
+    "Taxatierapport: {FULL_ADDRESS}. Eigenaar {PERSON}. Waarde: {MONEY}.",
 
     # ======================================================================
     # Politie / Verkeer (8 templates)
@@ -139,12 +139,42 @@ TEMPLATES: list[str] = [
     # ======================================================================
     "Boeking: {PERSON}, paspoort {ID_NO}, vlucht op {DATE}. Tel: {PHONE_NUMBER}, e-mail {EMAIL}.",
     "Rapport: {PERSON} werkt bij {ORGANIZATION} en verdient {MONEY}. Woont in wijk {LOCATION} te {LOCATION}.",
-    "{PERSON}, BSN {BSN}, e-mail {EMAIL}, telefoon {PHONE_NUMBER}. Woonadres: {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
+    "{PERSON}, BSN {BSN}, e-mail {EMAIL}, telefoon {PHONE_NUMBER}. Woonadres: {FULL_ADDRESS}.",
     "Gegevens: {PERSON}, geboren {DATE}, {NORP}. IBAN {IBAN}, BSN {BSN}.",
-    "Leerling {PERSON}, {EDUCATION_LEVEL}, woont {STREET_ADDRESS}, {POSTCODE} {LOCATION}. Vader werkt bij {ORGANIZATION}.",
-    "Handelsregister: {ORGANIZATION}, BTW {VAT_NUMBER}, KvK {KVK_NUMBER}. Adres: {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
-    "Gedetineerde: {PERSON}, {NORP}, {NORP}. ID-kaart {ID_NO}, adres {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
+    "Leerling {PERSON}, {EDUCATION_LEVEL}, woont {FULL_ADDRESS}. Vader werkt bij {ORGANIZATION}.",
+    "Handelsregister: {ORGANIZATION}, BTW {VAT_NUMBER}, KvK {KVK_NUMBER}. Adres: {FULL_ADDRESS}.",
+    "Gedetineerde: {PERSON}, {NORP}, {NORP}. ID-kaart {ID_NO}, adres {FULL_ADDRESS}.",
     "Registratie: {PERSON}, IBAN {IBAN}, e-mail {EMAIL}. Werkgever: {ORGANIZATION} te {LOCATION}.",
-    "Notariële akte: {PERSON} en {PERSON} kopen woning {STREET_ADDRESS}, {POSTCODE} {LOCATION} voor {MONEY} op {DATE}.",
+    "Notariële akte: {PERSON} en {PERSON} kopen woning {FULL_ADDRESS} voor {MONEY} op {DATE}.",
     "Polis: verzekeraar {ORGANIZATION}, verzekeringnemer {PERSON}, BSN {BSN}. Ingangsdatum {DATE}.",
+
+    # ======================================================================
+    # Tijd / Afspraken (8 templates)
+    # ======================================================================
+    "Afspraak op {DATE} om {TIME} bij {ORGANIZATION} in {LOCATION}.",
+    "{PERSON} dient zich te melden op {DATE} om {TIME} bij de rechtbank in {LOCATION}.",
+    "Het spreekuur van {ORGANIZATION} begint om {TIME} op {DATE}.",
+    "De vlucht vertrekt op {DATE} om {TIME} vanaf {LOCATION}.",
+    "Operatie voor {PERSON} (BSN {BSN}) gepland op {DATE} om {TIME} in {ORGANIZATION}.",
+    "Melding op {DATE} om {TIME}: ongeautoriseerde toegang bij {FULL_ADDRESS}.",
+    "Vergadering op {DATE} om {TIME} bij {ORGANIZATION}, {FULL_ADDRESS}.",
+    "De rechtszitting in zaak {CASE_NO} begint op {DATE} om {TIME} in {LOCATION}.",
+
+    # ======================================================================
+    # Creditcard / Betalingen (5 templates)
+    # ======================================================================
+    "Betaald met creditcard {CREDIT_CARD} op {DATE} bij {ORGANIZATION}.",
+    "Fraudemelding voor kaart {CREDIT_CARD}, houder {PERSON}, {FULL_ADDRESS}.",
+    "Transactie van {MONEY} geautoriseerd voor creditcard {CREDIT_CARD} op {DATE}.",
+    "Verloren creditcard {CREDIT_CARD} gemeld door {PERSON} bij {ORGANIZATION}.",
+    "Creditcardnummer {CREDIT_CARD} gekoppeld aan account {EMAIL} van {PERSON}.",
+
+    # ======================================================================
+    # Postcode standalone (voor coverage)
+    # ======================================================================
+    "Postcode {POSTCODE} valt onder de gemeente {LOCATION}.",
+    "Het pakket werd bezorgd op postcode {POSTCODE} in {LOCATION}.",
+    "Woongebied met postcode {POSTCODE} heeft {ORGANIZATION} als energieleverancier.",
+    "De subsidie geldt voor adressen met postcode {POSTCODE} in {LOCATION}.",
+    "Bewoners van postcode {POSTCODE} ontvingen een brief van {ORGANIZATION}.",
 ]

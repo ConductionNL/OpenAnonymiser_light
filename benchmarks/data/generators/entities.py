@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import random
 import string
+from typing import Callable
 
 from faker import Faker
 
@@ -323,6 +324,14 @@ def gen_street_address() -> str:
     return f"{street} {number}{suffix}"
 
 
+def gen_full_address() -> str:
+    """Generate a full Dutch address: street + house number, postcode city."""
+    street = gen_street_address()
+    postcode = gen_postcode()
+    city = gen_location()
+    return f"{street}, {postcode} {city}"
+
+
 def gen_norp() -> str:
     """Generate a nationality/religion/political group (NORP)."""
     return random.choice(NORPS)
@@ -361,15 +370,82 @@ def gen_social_media() -> str:
     return f"@{first}{sep}{last}{suffix}"
 
 
+def gen_time() -> str:
+    """Generate a Dutch time expression matching the TimeRecognizer patterns."""
+    hour_24 = random.randint(0, 23)
+    hour_12 = random.randint(1, 12)
+    minute = random.randint(0, 59)
+    second = random.randint(0, 59)
+    ampm = random.choice(["AM", "PM", "am", "pm"])
+
+    formats = [
+        lambda: f"{hour_24:02d}:{minute:02d}:{second:02d}",
+        lambda: f"{hour_12}:{minute:02d} {ampm}",
+        lambda: f"{hour_24:02d}:{minute:02d}",
+        lambda: f"{hour_24} uur",
+        lambda: f"{hour_24}uur",
+    ]
+    return random.choice(formats)()
+
+
+def _luhn_check_digit(digits: list) -> int:
+    """Compute Luhn check digit for a list of digits (without the check digit)."""
+    total = 0
+    for i, d in enumerate(reversed(digits)):
+        pos_from_right = i + 2  # check digit is at position 1 (rightmost)
+        if pos_from_right % 2 == 0:
+            doubled = d * 2
+            total += doubled - 9 if doubled > 9 else doubled
+        else:
+            total += d
+    return (10 - (total % 10)) % 10
+
+
+def gen_credit_card() -> str:
+    """Generate a Luhn-valid credit card number (Visa/Mastercard/Amex/Maestro)."""
+    sep = random.choice([" ", "-"])
+    card_type = random.choice(["visa", "mastercard", "amex", "maestro"])
+
+    if card_type == "visa":
+        digits = [4] + [random.randint(0, 9) for _ in range(14)]
+        digits.append(_luhn_check_digit(digits))
+        return sep.join("".join(str(d) for d in digits[i:i + 4]) for i in range(0, 16, 4))
+
+    elif card_type == "mastercard":
+        first_two = random.randint(51, 55)
+        digits = [int(c) for c in str(first_two)] + [random.randint(0, 9) for _ in range(13)]
+        digits.append(_luhn_check_digit(digits))
+        return sep.join("".join(str(d) for d in digits[i:i + 4]) for i in range(0, 16, 4))
+
+    elif card_type == "amex":
+        first_two = random.choice([34, 37])
+        digits = [int(c) for c in str(first_two)] + [random.randint(0, 9) for _ in range(12)]
+        digits.append(_luhn_check_digit(digits))
+        groups = [
+            "".join(str(d) for d in digits[0:4]),
+            "".join(str(d) for d in digits[4:10]),
+            "".join(str(d) for d in digits[10:15]),
+        ]
+        return sep.join(groups)
+
+    else:  # maestro
+        prefix = random.choice([6304, 6759, 6761, 6762, 6763])
+        prefix_digits = [int(c) for c in str(prefix)]
+        digits = prefix_digits + [random.randint(0, 9) for _ in range(11)]
+        digits.append(_luhn_check_digit(digits))
+        return sep.join("".join(str(d) for d in digits[i:i + 4]) for i in range(0, 16, 4))
+
+
 # ---------------------------------------------------------------------------
 # Registry: entity_type -> generator function
 # ---------------------------------------------------------------------------
 
-GENERATORS: dict[str, callable] = {
+GENERATORS: dict[str, Callable[[], str]] = {
     "PERSON": gen_person,
     "LOCATION": gen_location,
     "ORGANIZATION": gen_organization,
     "STREET_ADDRESS": gen_street_address,
+    "FULL_ADDRESS": gen_full_address,
     "POSTCODE": gen_postcode,
     "EMAIL": gen_email,
     "PHONE_NUMBER": gen_phone,
@@ -389,6 +465,8 @@ GENERATORS: dict[str, callable] = {
     "EDUCATION_LEVEL": gen_education_level,
     "POLITICAL_PARTY": gen_political_party,
     "SOCIAL_MEDIA": gen_social_media,
+    "TIME": gen_time,
+    "CREDIT_CARD": gen_credit_card,
 }
 
 

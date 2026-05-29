@@ -30,14 +30,22 @@ from benchmarks.data.generators.edge_cases import EDGE_CASE_TEMPLATES, FALSE_POS
 # Regex to find {ENTITY_TYPE} placeholders
 _PLACEHOLDER_RE = re.compile(r"\{([A-Z_]+)\}")
 
+# Remap entity types at span level (template placeholders remain unchanged)
+ENTITY_TYPE_REMAP: dict[str, str] = {
+    "STREET_ADDRESS": "LOCATION",  # legacy fallback; templates now use FULL_ADDRESS
+    "FULL_ADDRESS": "LOCATION",
+    "POLITICAL_PARTY": "NORP",
+}
+
 # Target counts per entity type in the normal dataset
 TARGET_COUNTS: dict[str, int] = {
-    "PERSON": 50, "LOCATION": 50, "ORGANIZATION": 50, "STREET_ADDRESS": 50,
+    "PERSON": 50, "LOCATION": 100, "ORGANIZATION": 50,
     "POSTCODE": 50, "EMAIL": 50, "PHONE_NUMBER": 50, "BSN": 50, "IBAN": 50,
     "KVK_NUMBER": 50, "VAT_NUMBER": 50, "LICENSE_PLATE": 50, "IP_ADDRESS": 50,
     "MAC_ADDRESS": 50, "DATE": 50, "DRIVERS_LICENSE": 50,
-    "ID_NO": 50, "CASE_NO": 50, "NORP": 50, "MONEY": 50,
-    "EDUCATION_LEVEL": 50, "POLITICAL_PARTY": 50, "SOCIAL_MEDIA": 30,
+    "ID_NO": 50, "CASE_NO": 50, "NORP": 100, "MONEY": 50,
+    "EDUCATION_LEVEL": 50, "SOCIAL_MEDIA": 30,
+    "TIME": 50, "CREDIT_CARD": 30,
 }
 
 
@@ -66,7 +74,7 @@ def _fill_template(template: str) -> dict | None:
         end_pos = len(result)
 
         spans.append({
-            "entity_type": entity_type,
+            "entity_type": ENTITY_TYPE_REMAP.get(entity_type, entity_type),
             "entity_value": value,
             "start_position": start_pos,
             "end_position": end_pos,

@@ -31,7 +31,7 @@ EDGE_CASE_TEMPLATES: list[str] = [
     # Entity at very end of sentence
     "Het e-mailadres is {EMAIL}",
     "Neem contact op met {PHONE_NUMBER}",
-    "De verdachte woont op {STREET_ADDRESS}",
+    "De verdachte woont op {LOCATION}.",
     "Het BSN van de cliënt is {BSN}",
     "Het kenteken is {LICENSE_PLATE}",
     "De zaak staat geregistreerd als {CASE_NO}",
@@ -41,16 +41,16 @@ EDGE_CASE_TEMPLATES: list[str] = [
     "IBAN: {IBAN}.",
     "E-mail: {EMAIL}.",
     "Naam: {PERSON}.",
-    "Adres: {STREET_ADDRESS}, {POSTCODE} {LOCATION}.",
+    "Adres: {FULL_ADDRESS}.",
     "KvK: {KVK_NUMBER}.",
 
     # Very long sentence with many entities
-    "In het dossier van {PERSON}, BSN {BSN}, woonachtig {STREET_ADDRESS}, {POSTCODE} {LOCATION}, werkzaam bij {ORGANIZATION} (KvK {KVK_NUMBER}, BTW {VAT_NUMBER}), bereikbaar op {PHONE_NUMBER} en {EMAIL}, met IBAN {IBAN}, is op {DATE} een melding gedaan over kenteken {LICENSE_PLATE} in zaak {CASE_NO}.",
+    "In het dossier van {PERSON}, BSN {BSN}, woonachtig {FULL_ADDRESS}, werkzaam bij {ORGANIZATION} (KvK {KVK_NUMBER}, BTW {VAT_NUMBER}), bereikbaar op {PHONE_NUMBER} en {EMAIL}, met IBAN {IBAN}, is op {DATE} een melding gedaan over kenteken {LICENSE_PLATE} in zaak {CASE_NO}.",
 
     # Multi-line (newlines in text)
-    "{PERSON}\n{STREET_ADDRESS}\n{POSTCODE} {LOCATION}\nE-mail: {EMAIL}\nTelefoon: {PHONE_NUMBER}",
-    "Gegevens:\nNaam: {PERSON}\nBSN: {BSN}\nAdres: {STREET_ADDRESS}\n{POSTCODE} {LOCATION}",
-    "Factuuradres:\n{ORGANIZATION}\n{STREET_ADDRESS}\n{POSTCODE} {LOCATION}\nKvK: {KVK_NUMBER}",
+    "{PERSON}\n{FULL_ADDRESS}\nE-mail: {EMAIL}\nTelefoon: {PHONE_NUMBER}",
+    "Gegevens:\nNaam: {PERSON}\nBSN: {BSN}\nAdres: {FULL_ADDRESS}",
+    "Factuuradres:\n{ORGANIZATION}\n{FULL_ADDRESS}\nKvK: {KVK_NUMBER}",
 
     # Entities in parentheses/brackets/quotes
     "De verdachte ({PERSON}) woont in {LOCATION}.",
@@ -61,7 +61,7 @@ EDGE_CASE_TEMPLATES: list[str] = [
 
     # Adjacent entities, minimal separator
     "{PERSON}, {BSN}, {IBAN}.",
-    "Adres: {STREET_ADDRESS} {POSTCODE} {LOCATION}, tel {PHONE_NUMBER}, mail {EMAIL}.",
+    "Adres: {FULL_ADDRESS}, tel {PHONE_NUMBER}, mail {EMAIL}.",
     "{DATE} {PERSON} {LOCATION}.",
 
     # All Dutch phone formats
@@ -121,7 +121,7 @@ EDGE_CASE_TEMPLATES: list[str] = [
     "Volg {SOCIAL_MEDIA} voor updates van {ORGANIZATION}.",
 
     # Mixed PII-dense
-    "Klantgegevens: {PERSON} ({SOCIAL_MEDIA}), {NORP}, {EDUCATION_LEVEL}. Woont {STREET_ADDRESS}, {POSTCODE} {LOCATION}. BSN {BSN}, tel {PHONE_NUMBER}, e-mail {EMAIL}.",
+    "Klantgegevens: {PERSON} ({SOCIAL_MEDIA}), {NORP}, {EDUCATION_LEVEL}. Woont {FULL_ADDRESS}. BSN {BSN}, tel {PHONE_NUMBER}, e-mail {EMAIL}.",
 ]
 
 
