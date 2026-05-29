@@ -58,10 +58,11 @@ class DutchIBANRecognizer(PatternRecognizer):
             ),
             # Internationaal IBAN (niet-NL landcodes; min 2 groepen van 4 na het controlegetal)
             # NL wordt uitgesloten: NL IBANs vallen onder DUTCH_IBAN, BTW-nummers beginnen ook met NL
+            # Lage base-score: vereist context-woorden (iban, bankrekening, ...) om boven drempel te komen
             Pattern(
                 "INTL_IBAN",
                 r"\b(?!NL)[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,4})?\b",
-                0.55,
+                0.25,
             ),
         ]
         super().__init__(
@@ -151,7 +152,7 @@ class DutchPostcodeRecognizer(PatternRecognizer):
         # Negative lookbehind prevents matching year tails like "2025 IN" from dates
         pattern = Pattern(
             "NL_POSTCODE",
-            r"(?<!\d[-/.])\b(?!0{4})(?:[1-9]\d{3})\s?(?!SA|SD|SS)[A-HJ-NP-Z]{2}\b",
+            r"(?<!\d[-/.])(?<!, )\b(?!0{4})(?:[1-9]\d{3})\s?(?!SA|SD|SS)[A-HJ-NP-Z]{2}\b",
             0.4,
         )
         super().__init__(
@@ -521,7 +522,7 @@ class DutchDriversLicenseRecognizer(PatternRecognizer):
             Pattern(
                 "NL_DRIVERS_LICENSE",
                 r"\b\d{10}\b",
-                0.01,
+                0.35,
             )
         ]
         super().__init__(
@@ -530,3 +531,167 @@ class DutchDriversLicenseRecognizer(PatternRecognizer):
             context=context or _DRIVERS_LICENSE_CONTEXT,
             supported_language=supported_language,
         )
+        
+_SOCIAL_MEDIA_CONTEXT = [
+    "twitter", "instagram", "tiktok", "linkedin", "facebook", "youtube",
+    "bluesky", "mastodon", "threads", "snapchat", "handle", "gebruikersnaam",
+    "account", "profiel", "volg", "volgen", "tag", "getagd", "social media",
+]
+
+
+class SocialMediaHandleRecognizer(PatternRecognizer):
+    """Herkenner voor social-media handles (bijv. @gebruikersnaam).
+
+    Matcht een @-teken dat niet voorafgegaan wordt door een woordteken
+    (om e-mailadressen uit te sluiten), gevolgd door 2-50 alfanumerieke
+    tekens of underscores.
+    """
+
+    def __init__(
+        self, context: Optional[List[str]] = None, supported_language: str = "nl"
+    ) -> None:
+        patterns = [
+            Pattern(
+                "SOCIAL_HANDLE",
+                r"(?<!\w)@[A-Za-z0-9_.]{2,50}\b",
+                0.5,
+            ),
+        ]
+        super().__init__(
+            supported_entity="SOCIAL_MEDIA",
+            patterns=patterns,
+            context=context or _SOCIAL_MEDIA_CONTEXT,
+            supported_language=supported_language,
+        )
+
+_TIME_CONTEXT = [
+    "tijd", "tijdstip", "om", "aanvang", "vertrek", "aankomst",
+    "opening", "sluiting", "uur", "klokslag", "afspraak",
+]
+
+
+class TimeRecognizer(PatternRecognizer):
+    """Herkenner voor tijdsaanduidingen in Nederlandse tekst.
+
+    Patronen (hoogste naar laagste specificiteit):
+    - HH:MM:SS (24-uurs met seconden)
+    - HH:MM of H:MM AM/PM (12-uurs)
+    - HH:MM of HH.MM (24-uurs, met of zonder leading zero)
+    - N uur / NN uur (losse uren — laagste score, context vereist)
+    """
+
+    def __init__(
+        self, context: Optional[List[str]] = None, supported_language: str = "nl"
+    ) -> None:
+        patterns = [
+            # HH:MM:SS — 24-uurs met seconden
+            Pattern(
+                "TIME_HH_MM_SS",
+                r"(?<![0-9A-Fa-f]:)\b(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\b",
+                0.85,
+            ),
+            # H:MM AM/PM — 12-uurs formaat
+            Pattern(
+                "TIME_12H_AMPM",
+                r"(?<![0-9A-Fa-f]:)\b(?:0?[1-9]|1[0-2]):[0-5]\d\s?(?:AM|PM|am|pm)\b",
+                0.8,
+            ),
+            # HH:MM — 24-uurs, strikte leading zero
+            Pattern(
+                "TIME_HH_MM_STRICT",
+                r"(?<![0-9A-Fa-f]:)\b(?:[01]\d|2[0-3]):[0-5]\d\b",
+                0.75,
+            ),
+            # H:MM — 24-uurs zonder leading zero (bijv. 9:30)
+            Pattern(
+                "TIME_H_MM_FLEXIBLE",
+                r"(?<![0-9A-Fa-f]:)\b(?:[0-9]|1\d|2[0-3]):[0-5]\d\b",
+                0.6,
+            ),
+            # N uur / NN uur — losse uren, hoog risico op false positives
+            Pattern(
+                "TIME_HOUR_ONLY",
+                r"\b(?:[01]?\d|2[0-3])\s?uur\b",
+                0.3,
+            ),
+        ]
+        super().__init__(
+            supported_entity="TIME",
+            patterns=patterns,
+            context=context or _TIME_CONTEXT,
+            supported_language=supported_language,
+        )
+
+
+_CREDIT_CARD_CONTEXT = [
+    "creditcard", "betaalkaart", "kaartnummer", "credit card",
+    "visa", "mastercard", "american express", "amex", "maestro",
+    "debitcard", "cc",
+]
+
+
+class CreditCardRecognizer(PatternRecognizer):
+    """Herkenner voor creditcardnummers (Visa, Mastercard, Amex, Maestro).
+
+    Matcht ook gespatieerde/streepjes-variants (bijv. 4111 1111 1111 1111).
+    Valideert met het Luhn-algoritme om false positives te beperken.
+
+    Prefixes en lengtes:
+    - Visa:        begint met 4, 13/16/19 cijfers
+    - Mastercard:  begint met 51-55 of 2221-2720, 16 cijfers
+    - Amex:        begint met 34 of 37, 15 cijfers
+    - Maestro:     variabel prefix, 12-19 cijfers
+    """
+
+    def __init__(
+        self, context: Optional[List[str]] = None, supported_language: str = "nl"
+    ) -> None:
+        patterns = [
+            # American Express: 34/37 + 13 cijfers = 15 totaal
+            Pattern(
+                "CC_AMEX",
+                r"\b3[47]\d{2}[\s\-]?\d{6}[\s\-]?\d{5}\b",
+                0.6,
+            ),
+            # Mastercard: 51-55 of 2221-2720, 16 cijfers
+            Pattern(
+                "CC_MASTERCARD",
+                r"\b(?:5[1-5]\d{2}|2(?:2[2-9]\d|[3-6]\d{2}|7[01]\d|720))[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b",
+                0.6,
+            ),
+            # Visa: begint met 4, 13, 16 of 19 cijfers
+            Pattern(
+                "CC_VISA",
+                r"\b4\d{3}[\s\-]?(?:\d{4}[\s\-]?\d{4}[\s\-]?\d{4}|\d{4}[\s\-]?\d{4}[\s\-]?\d{1,4}|\d{6}[\s\-]?\d{5}|\d{4}[\s\-]?\d{2})\b",
+                0.55,
+            ),
+            # Maestro: 12-19 cijfers, bekende prefixes (6304, 6759, 6761, 6762, 6763, 0604, 6390)
+            Pattern(
+                "CC_MAESTRO",
+                r"\b(?:6304|6759|6761|6762|6763|0604|6390)\d{8,15}\b"
+                r"|(?:6304|6759|6761|6762|6763|0604|6390)[\s\-]\d{4}[\s\-]\d{4}[\s\-]\d{0,7}\b",
+                0.55,
+            ),
+        ]
+        super().__init__(
+            supported_entity="CREDIT_CARD",
+            patterns=patterns,
+            context=context or _CREDIT_CARD_CONTEXT,
+            supported_language=supported_language,
+        )
+
+    def validate_result(self, pattern_text: str) -> bool:
+        """Valideer via het Luhn-algoritme."""
+        digits = [int(c) for c in pattern_text if c.isdigit()]
+        if len(digits) < 12:
+            return False
+        # Luhn: verdubbel elk tweede cijfer van rechts af, trek 9 af als > 9
+        total = 0
+        for i, d in enumerate(reversed(digits)):
+            if i % 2 == 1:
+                d *= 2
+                if d > 9:
+                    d -= 9
+            total += d
+        return total % 10 == 0
+    
