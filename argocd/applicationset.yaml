@@ -27,7 +27,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/ConductionNL/OpenAnonymiser_light.git
+        repoURL: https://codeberg.org/Conduction/OpenAnonymiser_light.git
         targetRevision: "{{branch}}"
         path: "k8s/overlays/{{env}}"
       destination:
