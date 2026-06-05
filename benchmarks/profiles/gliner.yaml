@@ -1,0 +1,47 @@
+# GLiNER baseline evaluation profile
+#
+# Uses coverage-based matching (GT coverage ≥ 0.3) as the primary
+# matching strategy. This tolerates GLiNER's boundary drift while
+# still requiring substantial overlap with ground truth.
+#
+# Usage:
+#   uv run benchmarks/evaluate.py --profile gliner --label-map benchmarks/label_maps/gliner_patterns.yaml
+
+matching:
+  strategy: coverage
+  coverage_threshold: 0.3
+  iou_threshold: 0.3
+  score_threshold: 0.45
+  length_ratio_threshold: 0.5
+
+thresholds:
+  PERSON:
+    precision: 0.80
+    recall: 0.85
+  LOCATION:
+    precision: 0.75
+    recall: 0.80
+  ORGANIZATION:
+    precision: 0.65
+    recall: 0.70
+  NORP:
+    precision: 0.70
+    recall: 0.60
+  MONEY:
+    precision: 0.70
+    recall: 0.65
+  EMAIL:
+    precision: 0.95
+    recall: 0.95
+  BSN:
+    precision: 0.95
+    recall: 0.95
+  IBAN:
+    precision: 0.95
+    recall: 0.95
+  PHONE_NUMBER:
+    precision: 0.80
+    recall: 0.85
+  DATE:
+    precision: 0.95
+    recall: 0.95

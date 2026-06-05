@@ -1,11 +1,14 @@
 """Benchmark evaluatie voor OpenAnonymiser PII-detectie.
 
 Vergelijkt karakter-gebaseerde span-voorspellingen met grondwaarheid per entiteitstype.
-Geen externe tokenisatiemodellen vereist; werkt direct met onze Presidio-analyzer.
+Ondersteunt meerdere span-matching strategieen (IoU, coverage, fuzzy, semi-strict)
+voor eerlijke evaluatie van GLiNER en andere NER modellen.
 
 Gebruik:
     uv run benchmarks/evaluate.py
-    uv run benchmarks/evaluate.py --data benchmarks/data/dutch_pii_sentences.json
+    uv run benchmarks/evaluate.py --profile gliner
+    uv run benchmarks/evaluate.py --matching-strategy coverage --coverage-threshold 0.3
+    uv run benchmarks/evaluate.py --compare
     uv run benchmarks/evaluate.py --fail-on-threshold
 
 Exit codes:
@@ -28,12 +31,10 @@ from pathlib import Path
 import click
 import yaml
 
-# Voeg project root toe zodat src/api importeerbaar is
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-# Import custom evaluation classes from evaluator module
 from benchmarks.evaluator import (
     CustomEvaluator,
     EvaluationResult,
@@ -41,13 +42,23 @@ from benchmarks.evaluator import (
     _EntityMetrics,
     _Sample,
     _Span,
+    collect_predictions,
+    run_multi_strategy_evaluation,
     token_error_analysis,
+)
+from benchmarks.matching import (
+    MatchingConfig,
+    MatchingStrategy,
+)
+from benchmarks.matching.statistics import (
+    ConfidenceInterval,
+    bootstrap_ci_entity_level,
+    bootstrap_ci_sample_level,
 )
 from benchmarks.plotter import EvaluationPlotter
 
 
 def _load_dataset(data_path: Path) -> list[_Sample]:
-    """Laad gelabelde zinnen uit JSON naar _Sample objecten."""
     raw = json.loads(data_path.read_text(encoding="utf-8"))
     samples: list[_Sample] = []
     for item in raw:
@@ -64,93 +75,98 @@ def _load_dataset(data_path: Path) -> list[_Sample]:
 
 
 def _load_thresholds(thresholds_path: Path) -> dict[str, dict[str, float]]:
-    """Laad minimale precision/recall drempels uit YAML."""
     return yaml.safe_load(thresholds_path.read_text(encoding="utf-8"))
+
+
+def _load_thresholds_profile(
+    thresholds_path: Path, profile: str | None
+) -> dict[str, dict[str, float]]:
+    raw = yaml.safe_load(thresholds_path.read_text(encoding="utf-8"))
+    if profile and profile in raw and isinstance(raw[profile], dict):
+        entries = {
+            k: v for k, v in raw[profile].items()
+            if isinstance(v, dict) and k != "_matching"
+        }
+        return entries
+    if all(isinstance(v, dict) for v in raw.values() if not isinstance(v, list)):
+        has_nested = any(
+            isinstance(v, dict) and any(isinstance(vv, dict) for vv in v.values())
+            for v in raw.values()
+        )
+        if not has_nested:
+            return raw
+    return raw
 
 
 def _collect_errors(
     samples: list[_Sample],
     score_threshold: float,
-    iou_threshold: float,
+    matching_config: MatchingConfig,
 ) -> dict[str, list[dict]]:
-    """Verzamel false positives, false negatives en partial matches.
-    
-    Wrapper around CustomEvaluator for backwards compatibility.
-    
-    Returns:
-        {
-            "false_positives": [...],
-            "false_negatives": [...],
-            "partial_matches": [...],
-        }
-    """
-    evaluator = CustomEvaluator(
-        iou_threshold=iou_threshold,
-        score_threshold=score_threshold,
-    )
+    evaluator = CustomEvaluator(matching_config=matching_config)
     result = evaluator.evaluate(samples)
     return result.errors
 
 
 def _print_errors(errors: dict[str, list[dict]], max_per_type: int = 3) -> None:
-    """Print false positives, false negatives en partial matches."""
-    
-    # False Positives
     if errors["false_positives"]:
         print("\n❌ False Positives (modeldetecteerde iets wat niet klopt):")
         print("-" * 80)
-        
+
         by_type = defaultdict(list)
         for err in errors["false_positives"]:
             by_type[err["entity_type"]].append(err)
-        
+
         for entity_type in sorted(by_type.keys()):
             items = by_type[entity_type][:max_per_type]
             print(f"\n  {entity_type} ({len(by_type[entity_type])} total):")
             for err in items:
                 print(f"    • '{err['text']}'")
                 print(f"      Context: ...{err['context']}...")
-    
-    # False Negatives
+
     if errors["false_negatives"]:
         print("\n⚠️  False Negatives (model miste deze):")
         print("-" * 80)
-        
+
         by_type = defaultdict(list)
         for err in errors["false_negatives"]:
             by_type[err["entity_type"]].append(err)
-        
+
         for entity_type in sorted(by_type.keys()):
             items = by_type[entity_type][:max_per_type]
             print(f"\n  {entity_type} ({len(by_type[entity_type])} total):")
             for err in items:
                 print(f"    • '{err['text']}'")
                 print(f"      Context: ...{err['context']}...")
-    
-    # Partial Matches
+
     if errors["partial_matches"]:
-        print("\n\U0001f4ca Partial Matches (misclassificaties: zelfde span, verkeerd type):")
+        print("\U0001f4ca Partial Matches (misclassificaties: zelfde span, verkeerd type):")
         print("-" * 80)
-        
+
         for err in errors["partial_matches"][:5]:
             pred_type = err.get("predicted_type", "?")
+            match_type = err.get("match_type", "")
+            gt_cov = err.get("gt_coverage", 0.0)
             print(f"\n  GT={err['entity_type']} → pred={pred_type}:")
             print(f"    Predicted:    '{err['predicted']}'")
             print(f"    Ground-truth: '{err['ground_truth']}'")
-            print(f"    IoU: {err['iou']:.2f}")
+            print(f"    IoU: {err['iou']:.2f}  GT coverage: {gt_cov:.2f}  Match: {match_type}")
 
 
 def _load_label_map(label_map_path: Path) -> dict[str, str | None]:
-    """Laad entity label mapping uit YAML.
-    
-    Labels met waarde null worden weggelaten uit evaluatie (model kan ze niet detecteren).
-    """
     raw = yaml.safe_load(label_map_path.read_text(encoding="utf-8"))
     return {k: (v if v != "null" else None) for k, v in raw.items()}
 
 
+_LABEL_MAPS_DIR = Path(__file__).resolve().parent / "label_maps"
+
+_PROFILE_LABEL_MAPS: dict[str, Path] = {
+    "gliner": _LABEL_MAPS_DIR / "gliner_patterns.yaml",
+    "spacy": _LABEL_MAPS_DIR / "spacy_patterns.yaml",
+}
+
+
 def _print_pii_coverage(coverage: PiiCoverageMetrics) -> None:
-    """Print binary PII coverage metrics."""
     print()
     print("PII Coverage (binary):")
     print("-" * 80)
@@ -169,7 +185,6 @@ def _print_pii_coverage(coverage: PiiCoverageMetrics) -> None:
 
 
 def _print_token_analysis(errors: dict, n: int = 10) -> None:
-    """Print top-N token analysis over FP/FN errors."""
     analysis = token_error_analysis(errors, n=n)
 
     if analysis["fp_tokens"]:
@@ -197,19 +212,39 @@ def _print_token_analysis(errors: dict, n: int = 10) -> None:
                 print(f"    {entity}: {top}")
 
 
+def _print_ci(ci: ConfidenceInterval, label: str) -> None:
+    print(f"  {label:<12} {ci.point_estimate:.3f}  [{ci.ci_lower:.3f}, {ci.ci_upper:.3f}]  (width={ci.width:.3f})")
+
+
+def _print_bootstrap_cis(result: EvaluationResult) -> None:
+    print("\nBootstrap 95% Confidence Intervals (sample-level):")
+    print("-" * 80)
+
+    global_ci = bootstrap_ci_sample_level(result.per_sample_counts)
+    _print_ci(global_ci["precision"], "Precision")
+    _print_ci(global_ci["recall"], "Recall")
+    _print_ci(global_ci["f1"], "F1")
+
+    print("\n  Per-entity CIs:")
+    for entity in sorted(result.metrics.keys()):
+        if entity == "O":
+            continue
+        m = result.metrics[entity]
+        ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
+        print(f"    {entity:<20} P: {ci['precision']}  R: {ci['recall']}  F1: {ci['f1']}")
+
+
 def _save_run_metadata(
     output_dir: Path,
     data_path: Path,
     thresholds_path: Path,
     label_map_path: Path | None,
-    score_threshold: float,
-    iou_threshold: float,
+    matching_config: MatchingConfig,
     entity_filter: frozenset[str] | None,
     dataset_size: int,
     all_pass: bool,
     result: EvaluationResult,
 ) -> Path:
-    """Sla run-configuratie en samenvatting op als run_metadata.json."""
     output_dir.mkdir(parents=True, exist_ok=True)
 
     def _sha256(p: Path) -> str:
@@ -259,8 +294,11 @@ def _save_run_metadata(
             "path": str(thresholds_path),
         },
         "evaluation": {
-            "score_threshold": score_threshold,
-            "iou_threshold": iou_threshold,
+            "matching_strategy": matching_config.strategy.value,
+            "iou_threshold": matching_config.iou_threshold,
+            "coverage_threshold": matching_config.coverage_threshold,
+            "length_ratio_threshold": matching_config.length_ratio_threshold,
+            "score_threshold": matching_config.score_threshold,
             "label_map": str(label_map_path) if label_map_path else None,
             "entity_filter": sorted(entity_filter) if entity_filter else None,
             "all_thresholds_passed": all_pass,
@@ -284,55 +322,17 @@ def _save_run_metadata(
 
 def _evaluate(
     samples: list[_Sample],
-    score_threshold: float,
-    iou_threshold: float,
+    matching_config: MatchingConfig,
 ) -> dict[str, _EntityMetrics]:
-    """Evalueer per entiteitstype op basis van karakter-span IoU.
-    
-    Wrapper around CustomEvaluator for backwards compatibility.
-    """
-    evaluator = CustomEvaluator(
-        iou_threshold=iou_threshold,
-        score_threshold=score_threshold,
-    )
+    evaluator = CustomEvaluator(matching_config=matching_config)
     result = evaluator.evaluate(samples)
     return result.metrics
-
-
-def _get_pattern_entities() -> frozenset[str]:
-    """Laad pattern recognizer entity types uit plugins.yaml."""
-    try:
-        from src.api.utils.plugin_loader import load_plugins
-        cfg = load_plugins()
-        return cfg.pattern_entity_types
-    except Exception:
-        # Fallback als plugin loading mislukt
-        return frozenset([
-            "PHONE_NUMBER", "IBAN", "BSN", "DATE", "EMAIL", "ID_NO",
-            "DRIVERS_LICENSE", "VAT_NUMBER", "KVK_NUMBER", "LICENSE_PLATE",
-            "IP_ADDRESS", "CASE_NO"
-        ])
-
-
-def _filter_entities(
-    metrics: dict[str, _EntityMetrics],
-    thresholds: dict[str, dict[str, float]],
-    entity_filter: frozenset[str] | None,
-) -> tuple[dict[str, _EntityMetrics], dict[str, dict[str, float]]]:
-    """Filter metrics en thresholds op bepaalde entity types."""
-    if not entity_filter:
-        return metrics, thresholds
-    return (
-        {k: v for k, v in metrics.items() if k in entity_filter},
-        {k: v for k, v in thresholds.items() if k in entity_filter},
-    )
 
 
 def _print_table(
     metrics: dict[str, _EntityMetrics],
     thresholds: dict[str, dict[str, float]],
 ) -> bool:
-    """Print tabel met resultaten; geeft True als alle drempels gehaald zijn."""
     col_w = 20
     print(f"{'Entity':<{col_w}} {'Precision':>10} {'Recall':>8} {'F1':>8}  {'TP':>4} {'FP':>4} {'FN':>4}  Status")
     print("-" * 80)
@@ -355,12 +355,47 @@ def _print_table(
     return all_pass
 
 
+def _print_comparison_table(
+    multi_results: dict[str, EvaluationResult],
+) -> None:
+    print("\nMulti-Strategy Comparison:")
+    print("=" * 100)
+
+    all_entities = sorted(
+        set(e for r in multi_results.values() for e in r.metrics.keys())
+    )
+
+    header = f"{'Entity':<20}"
+    for strategy_name in multi_results:
+        header += f" | {strategy_name:^24} "
+    print(header)
+
+    subheader = f"{'':<20}"
+    for strategy_name in multi_results:
+        subheader += f" | {'P':>7} {'R':>7} {'F1':>7} "
+    print(subheader)
+    print("-" * len(subheader))
+
+    for entity in all_entities:
+        row = f"{entity:<20}"
+        for strategy_name, result in multi_results.items():
+            m = result.metrics.get(entity, _EntityMetrics())
+            row += f" | {m.precision:>7.2f} {m.recall:>7.2f} {m.f1:>7.2f} "
+        print(row)
+
+    row = f"{'GLOBAL':<20}"
+    for strategy_name, result in multi_results.items():
+        row += f" | {result.global_precision:>7.2f} {result.global_recall:>7.2f} {result.global_f1:>7.2f} "
+    print("-" * len(subheader))
+    print(row)
+
+
 @click.command()
 @click.option(
     "--data",
     "data_path",
     type=click.Path(exists=True, path_type=Path),
-    default=Path("benchmarks/data/dutch_synth_multi_entity_dataset.json"),
+    default=Path("benchmarks/data/dutch_generated_dataset.json"),
     show_default=True,
     help="Pad naar gelabelde testdata (JSON).",
 )
@@ -388,9 +423,41 @@ def _print_table(
 @click.option(
     "--iou-threshold",
     type=float,
+    default=None,
+    show_default=True,
+    help="Minimum IoU voor span match (alleen voor iou strategie).",
+)
+@click.option(
+    "--matching-strategy",
+    type=click.Choice([s.value for s in MatchingStrategy]),
+    default=None,
+    help="Span matching strategie: iou, coverage, containment, fuzzy_length, semi_strict, partial.",
+)
+@click.option(
+    "--coverage-threshold",
+    type=float,
+    default=0.3,
+    show_default=True,
+    help="Minimum GT coverage ratio (voor coverage strategie).",
+)
+@click.option(
+    "--length-ratio-threshold",
+    type=float,
     default=0.5,
     show_default=True,
-    help="Minimum overlap (IoU) tussen voorspelling en grondwaarheid.",
+    help="Minimum length ratio (voor fuzzy_length strategie).",
+)
+@click.option(
+    "--profile",
+    type=click.Choice(["gliner", "spacy", "strict"]),
+    default=None,
+    help="Evaluation profile: selects matching strategy, thresholds, and label map. Overrides --matching-strategy.",
+)
+@click.option(
+    "--compare",
+    is_flag=True,
+    default=False,
+    help="Run multi-strategy comparison (IoU, coverage, semi-strict) on the same predictions.",
 )
 @click.option(
     "--show-errors",
@@ -403,13 +470,6 @@ def _print_table(
     is_flag=True,
     default=False,
     help="Generate visualization plots (confusion matrix, metrics, errors).",
-)
-@click.option(
-    "--plot-format",
-    type=click.Choice(["html", "png", "both"], case_sensitive=False),
-    default="html",
-    show_default=True,
-    help="Plot format: html (interactive), png (static), or both.",
 )
 @click.option(
     "--html-report",
@@ -425,41 +485,28 @@ def _print_table(
     help="Directory where plots and reports will be saved.",
 )
 @click.option(
-    "--label-map",
-    "label_map_path",
-    type=click.Path(exists=True, path_type=Path),
-    default=None,
-    help="Pad naar label-mapping YAML (bijv. benchmarks/label_maps/spacy_patterns.yaml).",
-)
-@click.option(
-    "--pattern-only",
+    "--show-ci",
     is_flag=True,
     default=False,
-    help="Test alleen custom pattern recognizers (geen NER).",
-)
-@click.option(
-    "--entities",
-    type=str,
-    default=None,
-    help="Kommagescheiden lijst van entity types om te testen (bijv: PERSON,EMAIL,BSN).",
+    help="Print bootstrap 95% confidence intervals for P/R/F1.",
 )
 def main(
     data_path: Path,
     thresholds_path: Path,
     fail_on_threshold: bool,
     score_threshold: float,
-    iou_threshold: float,
+    iou_threshold: float | None,
+    matching_strategy: str | None,
+    coverage_threshold: float,
+    length_ratio_threshold: float,
+    profile: str | None,
+    compare: bool,
     show_errors: bool,
     plot: bool,
-    plot_format: str,
     html_report: bool,
     output_dir: Path,
-    pattern_only: bool,
-    entities: str | None,
-    label_map_path: Path | None,
+    show_ci: bool,
 ) -> None:
-    """Evalueer PII-detectie precision/recall per entiteitstype."""
-    # Tee stdout to a buffer so we can save the full report to file
     _orig_stdout = sys.stdout
     _buf = io.StringIO()
 
@@ -475,103 +522,132 @@ def main(
 
     sys.stdout = _TeeWriter(_orig_stdout, _buf)
 
+    # Build MatchingConfig from profile or individual options
+    if profile:
+        matching_config = MatchingConfig.from_profile(profile)
+        matching_config.score_threshold = score_threshold
+    elif matching_strategy:
+        strategy = MatchingStrategy(matching_strategy)
+        matching_config = MatchingConfig(
+            strategy=strategy,
+            iou_threshold=iou_threshold or 0.5,
+            coverage_threshold=coverage_threshold,
+            length_ratio_threshold=length_ratio_threshold,
+            score_threshold=score_threshold,
+        )
+    else:
+        matching_config = MatchingConfig(
+            iou_threshold=iou_threshold or 0.5,
+            score_threshold=score_threshold,
+        )
+
     print(f"Dataset:      {data_path}")
     print(f"Drempels:     {thresholds_path}")
-    print(f"Score min:    {score_threshold}  |  IoU min: {iou_threshold}")
+    print(f"Strategy:     {matching_config.strategy.value}")
+    print(f"Score min:    {matching_config.score_threshold}")
+    if matching_config.strategy in (MatchingStrategy.IOU, MatchingStrategy.FUZZY_LENGTH):
+        print(f"IoU min:      {matching_config.iou_threshold}")
+    if matching_config.strategy == MatchingStrategy.COVERAGE:
+        print(f"Coverage min: {matching_config.coverage_threshold}")
+    if matching_config.strategy == MatchingStrategy.FUZZY_LENGTH:
+        print(f"Length ratio: {matching_config.length_ratio_threshold}")
     print()
 
     try:
         dataset = _load_dataset(data_path)
-        thresholds = _load_thresholds(thresholds_path)
+        thresholds = _load_thresholds_profile(thresholds_path, profile)
     except (json.JSONDecodeError, yaml.YAMLError, KeyError) as exc:
         click.echo(f"Fout bij laden data/drempels: {exc}", err=True)
         sys.exit(2)
 
-    # Load optional label map
     label_map: dict[str, str | None] | None = None
-    if label_map_path:
-        try:
-            label_map = _load_label_map(label_map_path)
-            print(f"Label map:    {label_map_path}")
-        except (yaml.YAMLError, KeyError) as exc:
-            click.echo(f"Fout bij laden label map: {exc}", err=True)
-            sys.exit(2)
+    if profile and profile in _PROFILE_LABEL_MAPS:
+        label_map_path = _PROFILE_LABEL_MAPS[profile]
+        if label_map_path.exists():
+            try:
+                label_map = _load_label_map(label_map_path)
+                print(f"Label map:    {label_map_path}")
+            except (yaml.YAMLError, KeyError) as exc:
+                click.echo(f"Fout bij laden label map: {exc}", err=True)
+                sys.exit(2)
 
     print(f"Zinnen: {len(dataset)}\n")
 
-    # Use new CustomEvaluator directly instead of _evaluate()
-    evaluator = CustomEvaluator(
-        iou_threshold=iou_threshold,
-        score_threshold=score_threshold,
-    )
-    
-    # Determine entity filter
-    entity_filter: frozenset[str] | None = None
-    if pattern_only:
-        entity_filter = _get_pattern_entities()
-        print(f"Filter: Alleen pattern recognizers ({', '.join(sorted(entity_filter))})\n")
-    elif entities:
-        entity_filter = frozenset(e.strip().upper() for e in entities.split(","))
-        print(f"Filter: {', '.join(sorted(entity_filter))}\n")
-    
-    # Run evaluation
-    result = evaluator.evaluate(dataset, entities=entity_filter, label_map=label_map)
-    
-    # Filter thresholds to match evaluated entities
-    filtered_thresholds = {
-        k: v for k, v in thresholds.items()
-        if entity_filter is None or k in entity_filter
-    }
-    
+    # --- Multi-strategy comparison mode ---
+    if compare:
+        configs = [
+            MatchingConfig(strategy=MatchingStrategy.IOU, iou_threshold=0.5, score_threshold=score_threshold),
+            MatchingConfig(strategy=MatchingStrategy.COVERAGE, coverage_threshold=0.3, score_threshold=score_threshold),
+            MatchingConfig(strategy=MatchingStrategy.SEMI_STRICT, score_threshold=score_threshold),
+        ]
+        multi_results = run_multi_strategy_evaluation(
+            dataset, configs, label_map=label_map,
+            score_threshold=0.0,
+        )
+        _print_comparison_table(multi_results)
+
+        if show_ci:
+            for strategy_name, result in multi_results.items():
+                print(f"\n--- {strategy_name} Confidence Intervals ---")
+                _print_bootstrap_cis(result)
+
+        sys.stdout = _orig_stdout
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_txt = output_dir / "eval_report.txt"
+        report_txt.write_text(_buf.getvalue(), encoding="utf-8")
+        print(f"\n  ✓ Report saved: {report_txt}")
+        return
+
+    # --- Single-strategy evaluation ---
+    evaluator = CustomEvaluator(matching_config=matching_config)
+    result = evaluator.evaluate(dataset, label_map=label_map)
+
+    filtered_thresholds = thresholds
+
     all_pass = _print_table(result.metrics, filtered_thresholds)
     _print_pii_coverage(result.pii_coverage)
+
+    if show_ci:
+        _print_bootstrap_cis(result)
 
     if show_errors:
         _print_errors(result.errors)
         _print_token_analysis(result.errors)
 
-    # Generate plots if requested
     if plot:
         print(f"\n📊 Generating plots to: {output_dir}")
         plotter = EvaluationPlotter(result, output_dir)
-        
-        if plot_format.lower() in ["html", "both"]:
-            print("  • Generating confusion matrix heatmap (HTML)...")
-            _, html_cm = plotter.plot_confusion_matrix_heatmap()
-            print(f"    ✓ Saved: {html_cm}")
-            
-            print("  • Generating metrics bar chart...")
-            metrics_html = plotter.plot_metrics_bars()
-            print(f"    ✓ Saved: {metrics_html}")
-            
-            print("  • Generating error distribution...")
-            errors_html = plotter.plot_error_distribution()
-            print(f"    ✓ Saved: {errors_html}")
-        
-        if plot_format.lower() in ["png", "both"]:
-            print("  • Generating confusion matrix (PNG)...")
-            png_cm, _ = plotter.plot_confusion_matrix_heatmap()
-            print(f"    ✓ Saved: {png_cm}")
-        
+
+        print("  • Generating confusion matrix (PNG)...")
+        png_cm, _ = plotter.plot_confusion_matrix_heatmap()
+        print(f"    ✓ Saved: {png_cm}")
+
+        print("  • Generating metrics bar chart...")
+        metrics_html = plotter.plot_metrics_bars()
+        print(f"    ✓ Saved: {metrics_html}")
+
+        print("  • Generating error distribution...")
+        errors_html = plotter.plot_error_distribution()
+        print(f"    ✓ Saved: {errors_html}")
+
         if html_report:
             print("  • Generating single-page HTML report...")
             report_path = plotter.generate_html_report()
             print(f"    ✓ Saved: {report_path}")
 
-        print("  \u2022 Saving run metadata...")
+        print("  • Saving run metadata...")
         meta_path = _save_run_metadata(
             output_dir=output_dir,
             data_path=data_path,
             thresholds_path=thresholds_path,
-            label_map_path=label_map_path,
-            score_threshold=score_threshold,
-            iou_threshold=iou_threshold,
-            entity_filter=entity_filter,
+            label_map_path=_PROFILE_LABEL_MAPS.get(profile) if profile else None,
+            matching_config=matching_config,
+            entity_filter=None,
             dataset_size=len(dataset),
             all_pass=all_pass,
             result=result,
         )
-        print(f"    \u2713 Saved: {meta_path}")
+        print(f"    ✓ Saved: {meta_path}")
 
         print()
 
@@ -581,7 +657,6 @@ def main(
     else:
         print("Alle drempels gehaald.")
 
-    # Save full console output to eval_report.txt
     sys.stdout = _orig_stdout
     output_dir.mkdir(parents=True, exist_ok=True)
     report_txt = output_dir / "eval_report.txt"

@@ -1,32 +1,50 @@
 # Label mapping: GLiNER + custom pattern recognizers
 #
-# GLiNER+patterns covers all entity types in the dataset.
-# This file is the identity map — all labels are kept as-is.
-# Listed explicitly for documentation and to make run configurations symmetric.
+# GLiNER (urchade/gliner_multi_pii-v1) + patterns covers all entity types.
+# Based on the entity_mapping in src/api/plugins.yaml.
+# GLiNER labels that map to the same entity type are merged;
+# labels not produced by this pipeline are set to null.
 #
-# Usage:
-#   uv run benchmarks/evaluate.py --label-map benchmarks/label_maps/gliner_patterns.yaml
+# Used automatically with: uv run benchmarks/evaluate.py --profile gliner
 
+# --- GLiNER entity_mapping (from plugins.yaml) ---
+persoon: PERSON
+naam: PERSON
+locatie: LOCATION
+woonplaats: LOCATION
+gemeente: LOCATION
+stad: LOCATION
+wijk: LOCATION
+buurt: LOCATION
+adres: LOCATION
+nationaliteit: NORP
+religie: NORP
+etniciteit: NORP
+politieke_groep: NORP
+politieke_partij: NORP
+organisatie: ORGANIZATION
+werkgever: ORGANIZATION
+bedrijf: ORGANIZATION
+
+# --- Custom pattern recognizers (identity map) ---
 BSN: BSN
 CASE_NO: CASE_NO
 DATE: DATE
 DRIVERS_LICENSE: DRIVERS_LICENSE
-EDUCATION_LEVEL: EDUCATION_LEVEL
 EMAIL: EMAIL
 IBAN: IBAN
 ID_NO: ID_NO
 IP_ADDRESS: IP_ADDRESS
 KVK_NUMBER: KVK_NUMBER
 LICENSE_PLATE: LICENSE_PLATE
-LOCATION: LOCATION
 MAC_ADDRESS: MAC_ADDRESS
-MONEY: MONEY
-NORP: NORP
-ORGANIZATION: ORGANIZATION
-PERSON: PERSON
 PHONE_NUMBER: PHONE_NUMBER
 POSTCODE: POSTCODE
 VAT_NUMBER: VAT_NUMBER
 SOCIAL_MEDIA: SOCIAL_MEDIA
 TIME: TIME
 CREDIT_CARD: CREDIT_CARD
+
+# --- Entities not produced by this pipeline ---
+EDUCATION_LEVEL: null
+MONEY: null
