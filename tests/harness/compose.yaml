@@ -1,0 +1,52 @@
+# Per-flavor containers voor test-harness.
+#
+# Gebruik — beide flavors tegelijk (aanbevolen):
+#   OPENANONYMISER_IMAGE_CLASSIC=ghcr.io/conductionnl/openanonymiser:main \
+#   OPENANONYMISER_IMAGE_GPU=ghcr.io/conductionnl/openanonymiser:development \
+#     docker compose -f tests/harness/compose.yaml up -d
+#
+# Gebruik — één flavor:
+#   OPENANONYMISER_IMAGE_CLASSIC=<tag> docker compose -f tests/harness/compose.yaml up -d classic
+#
+# Services draaien op verschillende host-poorten zodat ze parallel kunnen.
+
+services:
+  classic:
+    image: "${OPENANONYMISER_IMAGE_CLASSIC:-openanonymiser-light:classic}"
+    container_name: openanonymiser-harness-classic
+    ports:
+      - "8081:8080"
+    environment:
+      DEBUG: "false"
+      DEFAULT_LANGUAGE: "nl"
+      DEFAULT_SPACY_MODEL: "nl_core_news_md"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+  gpu:
+    image: "${OPENANONYMISER_IMAGE_GPU:-openanonymiser-light:gpu}"
+    container_name: openanonymiser-harness-gpu
+    ports:
+      - "8082:8080"
+    environment:
+      DEBUG: "false"
+      DEFAULT_LANGUAGE: "nl"
+      DEFAULT_SPACY_MODEL: "nl_core_news_md"
+    # Wanneer GPU-image beschikbaar is, unncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 60s

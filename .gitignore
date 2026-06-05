@@ -84,8 +84,14 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 
-# Local env
+# Local env / secrets
 .env
+.env.*
+*.pem
+*.key
+
+# Basic auth credentials (plain text htpasswd, never commit)
+basic-auth.auth
 
 # Deployment configurations with sensitive info
 *-prod.yaml
@@ -94,7 +100,8 @@ Thumbs.db
 test_results.json
 
 # Claude Code – lokaal tooling, niet relevant voor andere gebruikers
-.claude/
+.claude/*
+!.claude/file-write-allowlist
 CLAUDE.md
 
 # Venv
@@ -102,3 +109,9 @@ CLAUDE.md
 
 # Runtime logs (build-log hook output)
 logs/
+
+# Basic auth credentials (plain text htpasswd, never commit)
+basic-auth.auth
+
+# Docker Hub SA-credentials voor scripts/setup-dockerhub-secrets.sh
+.env.dockerhub

@@ -21,7 +21,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: openanonymiser
-          image: docker.io/mwest2020/openanonymiser-light:latest
+          image: docker.io/conductiondeploy/openanonymiser-light:latest
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -36,10 +36,10 @@ spec:
           resources:
             requests:
               cpu: "200m"
-              memory: "512Mi"
+              memory: "1Gi"
             limits:
               cpu: "1000m"
-              memory: "1Gi"
+              memory: "4Gi"
           volumeMounts:
             - name: tmp
               mountPath: /tmp

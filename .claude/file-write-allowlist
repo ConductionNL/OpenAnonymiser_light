@@ -1,0 +1,7 @@
+# Per-project carve-outs van de globale .env-write-block in
+# ~/.claude/hooks/pre-tool-use.sh. Patronen zijn shell-globs, gematcht
+# relatief aan de repo-root. Alleen single-segment * werkt.
+# Voeg geen secret-bearing files toe.
+
+# Kustomize configmap-inputs (DEBUG, language, model name — geen credentials).
+k8s/overlays/*/config.env

@@ -1,0 +1,14 @@
+{"id": "email-simple", "text": "Stuur een mail naar info@voorbeeld.nl voor vragen.", "entities": [{"entity_type": "EMAIL", "text": "info@voorbeeld.nl", "start": 20, "end": 37}]}
+{"id": "phone-mobile", "text": "Bel mij op 06-12345678 als je er bent.", "entities": [{"entity_type": "PHONE_NUMBER", "text": "06-12345678", "start": 11, "end": 22}]}
+{"id": "iban-nl", "text": "Maak over naar NL91 ABNA 0417 1643 00 ter attentie van de penningmeester.", "entities": [{"entity_type": "IBAN", "text": "NL91 ABNA 0417 1643 00", "start": 15, "end": 37}]}
+{"id": "date-iso", "text": "De zitting is gepland op 15-03-2026 in de rechtbank.", "entities": [{"entity_type": "DATE_TIME", "text": "15-03-2026", "start": 25, "end": 35}]}
+{"id": "date-dutch-month", "text": "Op 22 februari 2026 staat de afspraak gepland.", "entities": [{"entity_type": "DATE_TIME", "text": "22 februari 2026", "start": 3, "end": 19}]}
+{"id": "person-simple", "text": "Jan de Vries heeft de aanvraag ingediend.", "entities": [{"entity_type": "PERSON", "text": "Jan de Vries", "start": 0, "end": 12}]}
+{"id": "location-city", "text": "Het kantoor staat in Amersfoort aan de hoofdstraat.", "entities": [{"entity_type": "LOCATION", "text": "Amersfoort", "start": 21, "end": 31}]}
+{"id": "organization-stichting", "text": "Namens Stichting Open Overheid hebben wij een vraag.", "entities": [{"entity_type": "ORGANIZATION", "text": "Stichting Open Overheid", "start": 7, "end": 30}]}
+{"id": "combined-letter", "text": "Mevrouw Jansen woont in Utrecht en is bereikbaar via jansen@test.nl of 030-1234567.", "entities": [{"entity_type": "PERSON", "text": "Jansen", "start": 8, "end": 14}, {"entity_type": "LOCATION", "text": "Utrecht", "start": 24, "end": 31}, {"entity_type": "EMAIL", "text": "jansen@test.nl", "start": 53, "end": 67}, {"entity_type": "PHONE_NUMBER", "text": "030-1234567", "start": 71, "end": 82}]}
+{"id": "bsn-context", "text": "Mijn BSN is 123456782 en ik ontvang graag een bevestiging.", "entities": [{"entity_type": "BSN", "text": "123456782", "start": 12, "end": 21}]}
+{"id": "license-plate", "text": "De auto met kenteken AB-123-C is aangetroffen in de garage.", "entities": [{"entity_type": "LICENSE_PLATE", "text": "AB-123-C", "start": 21, "end": 29}]}
+{"id": "kvk-number", "text": "Wij staan ingeschreven bij de KvK onder nummer 12345678.", "entities": [{"entity_type": "KVK_NUMBER", "text": "12345678", "start": 47, "end": 55}]}
+{"id": "case-no", "text": "Zaaknummer 12/345678 is in behandeling bij de afdeling juridisch.", "entities": [{"entity_type": "CASE_NO", "text": "12/345678", "start": 11, "end": 20}]}
+{"id": "ip-address", "text": "De aanvraag kwam van IP-adres 192.168.1.42 binnen ons netwerk.", "entities": [{"entity_type": "IP_ADDRESS", "text": "192.168.1.42", "start": 30, "end": 42}]}
