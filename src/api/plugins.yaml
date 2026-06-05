@@ -96,7 +96,7 @@ recognizers:
 
   - name: GLiNERRecognizer
     type: gliner
-    enabled: false
+    enabled: true
     model: "urchade/gliner_multi_pii-v1"
     entity_mapping:
       # CONTEXTUELE PII — alleen entiteiten die patterns niet kunnen detecteren
