@@ -268,18 +268,17 @@ class CustomEvaluator:
                     m = self._matcher.match(pred.start, pred.end, gt.start, gt.end)
                     if m.is_match:
                         candidates.append((m.score, gi, pi))
-                        match_details.append({
-                            "sample_idx": len(per_sample_counts),
-                            "gt_idx": gi,
-                            "pred_idx": pi,
-                            "entity_type": gt.entity_type,
-                            "match_type": m.match_type,
-                            "score": m.score,
-                            "iou": m.iou,
-                            "gt_coverage": m.gt_coverage,
-                            "pred_coverage": m.pred_coverage,
-                            "length_ratio": m.length_ratio,
-                        })
+                    match_details.append({
+                        "sample_idx": len(per_sample_counts),
+                        "gt_idx": gi,
+                        "pred_idx": pi,
+                        "entity_type": gt.entity_type,
+                        "match_type": m.match_type,
+                        "score": m.score,
+                        "iou": m.iou,
+                        "gt_coverage": m.gt_coverage,
+                        "pred_coverage": m.pred_coverage,
+                    })
 
             matched_gts: set[int] = set()
             matched_preds: set[int] = set()
@@ -443,7 +442,6 @@ class CustomEvaluator:
                             "iou": m.iou,
                             "gt_coverage": m.gt_coverage,
                             "pred_coverage": m.pred_coverage,
-                            "length_ratio": m.length_ratio,
                         })
 
             matched_gts: set[int] = set()
@@ -606,37 +604,3 @@ def token_error_analysis(
         "fp_by_entity": {et: c.most_common(n) for et, c in fp_by_entity.items()},
         "fn_by_entity": {et: c.most_common(n) for et, c in fn_by_entity.items()},
     }
-
-
-def collect_predictions(dataset: list[_Sample], score_threshold: float = 0.0) -> dict[int, list[_Span]]:
-    from src.api.services.text_analyzer import analyze
-
-    cache: dict[int, list[_Span]] = {}
-    for i, sample in enumerate(dataset):
-        results = analyze(sample.text, language="nl")
-        cache[i] = [
-            _Span(r.entity_type, r.start, r.end)
-            for r in results
-            if r.score >= score_threshold
-        ]
-    return cache
-
-
-def run_multi_strategy_evaluation(
-    dataset: list[_Sample],
-    configs: list[MatchingConfig],
-    entities: frozenset[str] | None = None,
-    label_map: dict[str, str | None] | None = None,
-    score_threshold: float = 0.0,
-) -> dict[str, EvaluationResult]:
-    predictions_cache = collect_predictions(dataset, score_threshold=score_threshold)
-
-    results: dict[str, EvaluationResult] = {}
-    for config in configs:
-        evaluator = CustomEvaluator(matching_config=config)
-        result = evaluator.evaluate_from_cache(
-            dataset, predictions_cache, entities=entities, label_map=label_map
-        )
-        results[config.strategy.value] = result
-
-    return results

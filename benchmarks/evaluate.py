@@ -42,18 +42,11 @@ from benchmarks.evaluator import (
     _EntityMetrics,
     _Sample,
     _Span,
-    collect_predictions,
-    run_multi_strategy_evaluation,
     token_error_analysis,
 )
 from benchmarks.matching import (
     MatchingConfig,
     MatchingStrategy,
-)
-from benchmarks.matching.statistics import (
-    ConfidenceInterval,
-    bootstrap_ci_entity_level,
-    bootstrap_ci_sample_level,
 )
 from benchmarks.plotter import EvaluationPlotter
 
@@ -212,28 +205,6 @@ def _print_token_analysis(errors: dict, n: int = 10) -> None:
                 print(f"    {entity}: {top}")
 
 
-def _print_ci(ci: ConfidenceInterval, label: str) -> None:
-    print(f"  {label:<12} {ci.point_estimate:.3f}  [{ci.ci_lower:.3f}, {ci.ci_upper:.3f}]  (width={ci.width:.3f})")
-
-
-def _print_bootstrap_cis(result: EvaluationResult) -> None:
-    print("\nBootstrap 95% Confidence Intervals (sample-level):")
-    print("-" * 80)
-
-    global_ci = bootstrap_ci_sample_level(result.per_sample_counts)
-    _print_ci(global_ci["precision"], "Precision")
-    _print_ci(global_ci["recall"], "Recall")
-    _print_ci(global_ci["f1"], "F1")
-
-    print("\n  Per-entity CIs:")
-    for entity in sorted(result.metrics.keys()):
-        if entity == "O":
-            continue
-        m = result.metrics[entity]
-        ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
-        print(f"    {entity:<20} P: {ci['precision']}  R: {ci['recall']}  F1: {ci['f1']}")
-
-
 def _save_run_metadata(
     output_dir: Path,
     data_path: Path,
@@ -297,7 +268,6 @@ def _save_run_metadata(
             "matching_strategy": matching_config.strategy.value,
             "iou_threshold": matching_config.iou_threshold,
             "coverage_threshold": matching_config.coverage_threshold,
-            "length_ratio_threshold": matching_config.length_ratio_threshold,
             "score_threshold": matching_config.score_threshold,
             "label_map": str(label_map_path) if label_map_path else None,
             "entity_filter": sorted(entity_filter) if entity_filter else None,
@@ -355,41 +325,6 @@ def _print_table(
     return all_pass
 
 
-def _print_comparison_table(
-    multi_results: dict[str, EvaluationResult],
-) -> None:
-    print("\nMulti-Strategy Comparison:")
-    print("=" * 100)
-
-    all_entities = sorted(
-        set(e for r in multi_results.values() for e in r.metrics.keys())
-    )
-
-    header = f"{'Entity':<20}"
-    for strategy_name in multi_results:
-        header += f" | {strategy_name:^24} "
-    print(header)
-
-    subheader = f"{'':<20}"
-    for strategy_name in multi_results:
-        subheader += f" | {'P':>7} {'R':>7} {'F1':>7} "
-    print(subheader)
-    print("-" * len(subheader))
-
-    for entity in all_entities:
-        row = f"{entity:<20}"
-        for strategy_name, result in multi_results.items():
-            m = result.metrics.get(entity, _EntityMetrics())
-            row += f" | {m.precision:>7.2f} {m.recall:>7.2f} {m.f1:>7.2f} "
-        print(row)
-
-    row = f"{'GLOBAL':<20}"
-    for strategy_name, result in multi_results.items():
-        row += f" | {result.global_precision:>7.2f} {result.global_recall:>7.2f} {result.global_f1:>7.2f} "
-    print("-" * len(subheader))
-    print(row)
-
-
 @click.command()
 @click.option(
     "--data",
@@ -431,7 +366,7 @@ def _print_comparison_table(
     "--matching-strategy",
     type=click.Choice([s.value for s in MatchingStrategy]),
     default=None,
-    help="Span matching strategie: iou, coverage, containment, fuzzy_length, semi_strict, partial.",
+    help="Span matching strategie: iou, partial, coverage.",
 )
 @click.option(
     "--coverage-threshold",
@@ -439,13 +374,6 @@ def _print_comparison_table(
     default=0.3,
     show_default=True,
     help="Minimum GT coverage ratio (voor coverage strategie).",
-)
-@click.option(
-    "--length-ratio-threshold",
-    type=float,
-    default=0.5,
-    show_default=True,
-    help="Minimum length ratio (voor fuzzy_length strategie).",
 )
 @click.option(
     "--profile",
@@ -457,7 +385,8 @@ def _print_comparison_table(
     "--compare",
     is_flag=True,
     default=False,
-    help="Run multi-strategy comparison (IoU, coverage, semi-strict) on the same predictions.",
+    help=click.argument("deprecated", required=False),
+    hidden=True,
 )
 @click.option(
     "--show-errors",
@@ -484,12 +413,6 @@ def _print_comparison_table(
     show_default=True,
     help="Directory where plots and reports will be saved.",
 )
-@click.option(
-    "--show-ci",
-    is_flag=True,
-    default=False,
-    help="Print bootstrap 95% confidence intervals for P/R/F1.",
-)
 def main(
     data_path: Path,
     thresholds_path: Path,
@@ -498,14 +421,12 @@ def main(
     iou_threshold: float | None,
     matching_strategy: str | None,
     coverage_threshold: float,
-    length_ratio_threshold: float,
     profile: str | None,
     compare: bool,
     show_errors: bool,
     plot: bool,
     html_report: bool,
     output_dir: Path,
-    show_ci: bool,
 ) -> None:
     _orig_stdout = sys.stdout
     _buf = io.StringIO()
@@ -532,7 +453,6 @@ def main(
             strategy=strategy,
             iou_threshold=iou_threshold or 0.5,
             coverage_threshold=coverage_threshold,
-            length_ratio_threshold=length_ratio_threshold,
             score_threshold=score_threshold,
         )
     else:
@@ -545,12 +465,10 @@ def main(
     print(f"Drempels:     {thresholds_path}")
     print(f"Strategy:     {matching_config.strategy.value}")
     print(f"Score min:    {matching_config.score_threshold}")
-    if matching_config.strategy in (MatchingStrategy.IOU, MatchingStrategy.FUZZY_LENGTH):
+    if matching_config.strategy == MatchingStrategy.IOU:
         print(f"IoU min:      {matching_config.iou_threshold}")
     if matching_config.strategy == MatchingStrategy.COVERAGE:
         print(f"Coverage min: {matching_config.coverage_threshold}")
-    if matching_config.strategy == MatchingStrategy.FUZZY_LENGTH:
-        print(f"Length ratio: {matching_config.length_ratio_threshold}")
     print()
 
     try:
@@ -573,31 +491,6 @@ def main(
 
     print(f"Zinnen: {len(dataset)}\n")
 
-    # --- Multi-strategy comparison mode ---
-    if compare:
-        configs = [
-            MatchingConfig(strategy=MatchingStrategy.IOU, iou_threshold=0.5, score_threshold=score_threshold),
-            MatchingConfig(strategy=MatchingStrategy.COVERAGE, coverage_threshold=0.3, score_threshold=score_threshold),
-            MatchingConfig(strategy=MatchingStrategy.SEMI_STRICT, score_threshold=score_threshold),
-        ]
-        multi_results = run_multi_strategy_evaluation(
-            dataset, configs, label_map=label_map,
-            score_threshold=0.0,
-        )
-        _print_comparison_table(multi_results)
-
-        if show_ci:
-            for strategy_name, result in multi_results.items():
-                print(f"\n--- {strategy_name} Confidence Intervals ---")
-                _print_bootstrap_cis(result)
-
-        sys.stdout = _orig_stdout
-        output_dir.mkdir(parents=True, exist_ok=True)
-        report_txt = output_dir / "eval_report.txt"
-        report_txt.write_text(_buf.getvalue(), encoding="utf-8")
-        print(f"\n  ✓ Report saved: {report_txt}")
-        return
-
     # --- Single-strategy evaluation ---
     evaluator = CustomEvaluator(matching_config=matching_config)
     result = evaluator.evaluate(dataset, label_map=label_map)
@@ -606,9 +499,6 @@ def main(
 
     all_pass = _print_table(result.metrics, filtered_thresholds)
     _print_pii_coverage(result.pii_coverage)
-
-    if show_ci:
-        _print_bootstrap_cis(result)
 
     if show_errors:
         _print_errors(result.errors)

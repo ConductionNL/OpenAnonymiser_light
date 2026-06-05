@@ -12,7 +12,6 @@ matching:
   coverage_threshold: 0.3
   iou_threshold: 0.3
   score_threshold: 0.45
-  length_ratio_threshold: 0.5
 
 thresholds:
   PERSON:

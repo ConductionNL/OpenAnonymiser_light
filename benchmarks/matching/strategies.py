@@ -1,8 +1,6 @@
 """Span matching strategies for PII evaluation.
 
-Provides configurable matching strategies that go beyond standard IoU,
-enabling more tolerant evaluation for NER models like GLiNER that
-produce slightly offset or asymmetric entity spans.
+Provides IoU and coverage-based matching for PII entity evaluation.
 
 Usage:
     from benchmarks.matching import MatchingConfig, MatchingStrategy, SpanMatcher
@@ -24,9 +22,6 @@ class MatchingStrategy(Enum):
     IOU = "iou"
     PARTIAL_OVERLAP = "partial"
     COVERAGE = "coverage"
-    CONTAINMENT = "containment"
-    FUZZY_LENGTH = "fuzzy_length"
-    SEMI_STRICT = "semi_strict"
 
 
 @dataclass(frozen=True)
@@ -37,7 +32,6 @@ class SpanMatch:
     gt_coverage: float
     pred_coverage: float
     iou: float
-    length_ratio: float
 
 
 @dataclass
@@ -45,7 +39,6 @@ class MatchingConfig:
     strategy: MatchingStrategy = MatchingStrategy.IOU
     iou_threshold: float = 0.5
     coverage_threshold: float = 0.3
-    length_ratio_threshold: float = 0.5
     score_threshold: float = 0.4
 
     _PROFILE_DEFAULTS: ClassVar[dict[str, dict]] = {
@@ -58,11 +51,6 @@ class MatchingConfig:
         "spacy": {
             "strategy": MatchingStrategy.IOU,
             "iou_threshold": 0.5,
-            "score_threshold": 0.4,
-        },
-        "strict": {
-            "strategy": MatchingStrategy.IOU,
-            "iou_threshold": 0.75,
             "score_threshold": 0.4,
         },
     }
@@ -95,45 +83,22 @@ class SpanMatcher:
         iou = _iou(pred_start, pred_end, gt_start, gt_end)
         gt_coverage = _coverage(pred_start, pred_end, gt_start, gt_end)
         pred_coverage = _coverage(gt_start, gt_end, pred_start, pred_end)
-        pred_len = pred_end - pred_start
-        gt_len = gt_end - gt_start
-        length_ratio = min(pred_len, gt_len) / max(pred_len, gt_len) if max(pred_len, gt_len) else 0.0
 
         strategy = self.config.strategy
 
         if strategy == MatchingStrategy.IOU:
             is_match = iou >= self.config.iou_threshold
-            return SpanMatch(is_match, iou, "iou", gt_coverage, pred_coverage, iou, length_ratio)
+            return SpanMatch(is_match, iou, "iou", gt_coverage, pred_coverage, iou)
 
         if strategy == MatchingStrategy.PARTIAL_OVERLAP:
             is_match = iou > 0.0
-            return SpanMatch(is_match, iou, "partial", gt_coverage, pred_coverage, iou, length_ratio)
+            return SpanMatch(is_match, iou, "partial", gt_coverage, pred_coverage, iou)
 
         if strategy == MatchingStrategy.COVERAGE:
             is_match = gt_coverage >= self.config.coverage_threshold
-            return SpanMatch(is_match, gt_coverage, "coverage", gt_coverage, pred_coverage, iou, length_ratio)
+            return SpanMatch(is_match, gt_coverage, "coverage", gt_coverage, pred_coverage, iou)
 
-        if strategy == MatchingStrategy.CONTAINMENT:
-            contained = (gt_start <= pred_start and pred_end <= gt_end) or \
-                        (pred_start <= gt_start and gt_end <= pred_end)
-            score = 1.0 if contained else iou
-            return SpanMatch(contained, score, "containment", gt_coverage, pred_coverage, iou, length_ratio)
-
-        if strategy == MatchingStrategy.FUZZY_LENGTH:
-            if length_ratio >= self.config.length_ratio_threshold:
-                is_match = iou >= self.config.iou_threshold
-                return SpanMatch(is_match, iou, "fuzzy_similar", gt_coverage, pred_coverage, iou, length_ratio)
-            intersection = max(0, min(pred_end, gt_end) - max(pred_start, gt_start))
-            min_len = min(pred_len, gt_len)
-            effective = intersection / min_len if min_len else 0.0
-            is_match = effective >= self.config.iou_threshold
-            return SpanMatch(is_match, effective, "fuzzy_asymmetric", gt_coverage, pred_coverage, iou, length_ratio)
-
-        if strategy == MatchingStrategy.SEMI_STRICT:
-            is_match = pred_start < gt_end and gt_start < pred_end
-            return SpanMatch(is_match, iou, "semi_strict", gt_coverage, pred_coverage, iou, length_ratio)
-
-        return SpanMatch(False, 0.0, "none", gt_coverage, pred_coverage, iou, length_ratio)
+        raise ValueError(f"Unknown strategy: {strategy}")
 
 
 def _iou(pred_start: int, pred_end: int, gt_start: int, gt_end: int) -> float:

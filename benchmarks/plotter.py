@@ -33,11 +33,6 @@ import plotly.graph_objects as go
 import plotly.express as px
 import seaborn as sns
 from benchmarks.evaluator import EvaluationResult, _EntityMetrics
-from benchmarks.matching.statistics import (
-    ConfidenceInterval,
-    bootstrap_ci_entity_level,
-    bootstrap_ci_sample_level,
-)
 
 
 class EvaluationPlotter:
@@ -221,58 +216,9 @@ class EvaluationPlotter:
 
         return html_path
 
-    def plot_ci_bars(self) -> Path:
-        fig = go.Figure()
-
-        entities = sorted(
-            e for e in self.result.metrics.keys() if e != "O"
-        )
-
-        for entity in entities:
-            m = self.result.metrics[entity]
-            ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
-            fig.add_trace(go.Bar(
-                name=entity,
-                x=["Precision", "Recall", "F1"],
-                y=[
-                    ci["precision"].point_estimate,
-                    ci["recall"].point_estimate,
-                    ci["f1"].point_estimate,
-                ],
-                error_y=dict(
-                    type="data",
-                    symmetric=False,
-                    array=[
-                        ci["precision"].ci_upper - ci["precision"].point_estimate,
-                        ci["recall"].ci_upper - ci["recall"].point_estimate,
-                        ci["f1"].ci_upper - ci["f1"].point_estimate,
-                    ],
-                    arrayminus=[
-                        ci["precision"].point_estimate - ci["precision"].ci_lower,
-                        ci["recall"].point_estimate - ci["recall"].ci_lower,
-                        ci["f1"].point_estimate - ci["f1"].ci_lower,
-                    ],
-                ),
-            ))
-
-        fig.update_layout(
-            title="Per-Entity Metrics with 95% Bootstrap CI",
-            xaxis_title="Metric",
-            yaxis_title="Score",
-            barmode="group",
-            height=600,
-            width=1000,
-        )
-
-        html_path = self.plots_dir / "ci_bars.html"
-        fig.write_html(str(html_path))
-
-        return html_path
-
     def generate_html_report(self) -> Path:
         metrics_html = self._build_metrics_table()
         error_summary = self._build_error_summary()
-        ci_summary = self._build_ci_summary()
         strategy_info = self._build_strategy_info()
         confusion_matrix_b64 = self._embed_plot_as_base64(self.plots_dir / "confusion_matrix.png")
 
@@ -410,9 +356,6 @@ class EvaluationPlotter:
         <h2>Per-Entity Metrics</h2>
         {metrics_html}
 
-        <h2>Confidence Intervals (95% Bootstrap)</h2>
-        {ci_summary}
-
         <h2>Error Summary</h2>
         {error_summary}
 
@@ -439,8 +382,7 @@ class EvaluationPlotter:
             <strong>Matching Strategy:</strong> {cfg.strategy.value}<br>
             <strong>IoU Threshold:</strong> {cfg.iou_threshold}<br>
             <strong>Coverage Threshold:</strong> {cfg.coverage_threshold}<br>
-            <strong>Score Threshold:</strong> {cfg.score_threshold}<br>
-            <strong>Length Ratio Threshold:</strong> {cfg.length_ratio_threshold}
+            <strong>Score Threshold:</strong> {cfg.score_threshold}
         </div>
         """
 
@@ -477,48 +419,6 @@ class EvaluationPlotter:
             <th>TP</th>
             <th>FP</th>
             <th>FN</th>
-        </tr>
-    </thead>
-    <tbody>
-        {''.join(rows)}
-    </tbody>
-</table>
-        """
-
-    def _build_ci_summary(self) -> str:
-        rows = []
-        global_ci = bootstrap_ci_sample_level(self.result.per_sample_counts)
-        rows.append(f"""
-    <tr>
-        <td><strong>GLOBAL</strong></td>
-        <td>{global_ci['precision'].point_estimate:.3f} [{global_ci['precision'].ci_lower:.3f}, {global_ci['precision'].ci_upper:.3f}]</td>
-        <td>{global_ci['recall'].point_estimate:.3f} [{global_ci['recall'].ci_lower:.3f}, {global_ci['recall'].ci_upper:.3f}]</td>
-        <td>{global_ci['f1'].point_estimate:.3f} [{global_ci['f1'].ci_lower:.3f}, {global_ci['f1'].ci_upper:.3f}]</td>
-    </tr>
-        """)
-
-        for entity in sorted(self.result.metrics.keys()):
-            if entity == "O":
-                continue
-            m = self.result.metrics[entity]
-            ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
-            rows.append(f"""
-    <tr>
-        <td><strong>{entity}</strong></td>
-        <td>{ci['precision'].point_estimate:.3f} [{ci['precision'].ci_lower:.3f}, {ci['precision'].ci_upper:.3f}]</td>
-        <td>{ci['recall'].point_estimate:.3f} [{ci['recall'].ci_lower:.3f}, {ci['recall'].ci_upper:.3f}]</td>
-        <td>{ci['f1'].point_estimate:.3f} [{ci['f1'].ci_lower:.3f}, {ci['f1'].ci_upper:.3f}]</td>
-    </tr>
-            """)
-
-        return f"""
-<table>
-    <thead>
-        <tr>
-            <th>Entity Type</th>
-            <th>Precision CI</th>
-            <th>Recall CI</th>
-            <th>F1 CI</th>
         </tr>
     </thead>
     <tbody>
