@@ -4,15 +4,17 @@ Generates plots from EvaluationResult objects:
   - Confusion matrix heatmap (matplotlib + plotly)
   - Per-entity metrics bar charts (plotly)
   - Error distribution plots (plotly)
+  - Multi-strategy comparison table
+  - Confidence interval display
   - Combined HTML report
 
 Usage:
     from benchmarks.plotter import EvaluationPlotter
     from benchmarks.evaluator import CustomEvaluator
-    
+
     evaluator = CustomEvaluator()
     result = evaluator.evaluate(dataset)
-    
+
     plotter = EvaluationPlotter(result, output_dir=Path("./output"))
     plotter.plot_confusion_matrix_heatmap()
     plotter.plot_metrics_bars()
@@ -22,6 +24,7 @@ Usage:
 
 from __future__ import annotations
 
+import base64
 from pathlib import Path
 from typing import Any
 
@@ -29,19 +32,16 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
 import seaborn as sns
-from benchmarks.evaluator import EvaluationResult
+from benchmarks.evaluator import EvaluationResult, _EntityMetrics
+from benchmarks.matching.statistics import (
+    ConfidenceInterval,
+    bootstrap_ci_entity_level,
+    bootstrap_ci_sample_level,
+)
 
 
 class EvaluationPlotter:
-    """Generate visualization artifacts from EvaluationResult."""
-
     def __init__(self, result: EvaluationResult, output_dir: Path) -> None:
-        """Initialize plotter.
-
-        Args:
-            result: EvaluationResult object with metrics and errors
-            output_dir: Directory where plots will be saved
-        """
         self.result = result
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -49,15 +49,9 @@ class EvaluationPlotter:
         self.plots_dir.mkdir(exist_ok=True)
 
     def plot_confusion_matrix_heatmap(self) -> tuple[Path, Path]:
-        """Generate confusion matrix heatmaps (matplotlib PNG + plotly HTML).
-
-        Returns:
-            Tuple of (png_path, html_path)
-        """
         matrix = self.result.confusion_matrix
         entities = self.result.entity_types
 
-        # 1. Matplotlib version (PNG)
         plt.figure(figsize=(10, 8))
         sns.heatmap(
             matrix,
@@ -68,7 +62,10 @@ class EvaluationPlotter:
             yticklabels=entities,
             cbar_kws={"label": "Count"},
         )
-        plt.title("Confusion Matrix: Predicted vs Ground Truth Entities")
+        strategy_label = ""
+        if self.result.matching_config:
+            strategy_label = f" ({self.result.matching_config.strategy.value})"
+        plt.title(f"Confusion Matrix{strategy_label}: Predicted vs Ground Truth Entities")
         plt.xlabel("Predicted Entity Type")
         plt.ylabel("Ground Truth Entity Type")
         plt.tight_layout()
@@ -77,7 +74,6 @@ class EvaluationPlotter:
         plt.savefig(png_path, dpi=150, bbox_inches="tight")
         plt.close()
 
-        # 2. Plotly version (Interactive HTML)
         fig = go.Figure(
             data=go.Heatmap(
                 z=matrix,
@@ -91,7 +87,7 @@ class EvaluationPlotter:
             )
         )
         fig.update_layout(
-            title="Confusion Matrix: Predicted vs Ground Truth Entities",
+            title=f"Confusion Matrix{strategy_label}: Predicted vs Ground Truth Entities",
             xaxis_title="Predicted Entity Type",
             yaxis_title="Ground Truth Entity Type",
             width=800,
@@ -104,12 +100,7 @@ class EvaluationPlotter:
         return png_path, html_path
 
     def plot_metrics_bars(self) -> Path:
-        """Generate per-entity metrics bar chart (precision/recall/F1).
-
-        Returns:
-            Path to generated HTML file
-        """
-        metrics_data = {
+        metrics_data: dict[str, list[Any]] = {
             "Entity": [],
             "Precision": [],
             "Recall": [],
@@ -117,6 +108,10 @@ class EvaluationPlotter:
         }
 
         for entity in self.result.entity_types:
+            if entity == "O":
+                continue
+            if entity not in self.result.metrics:
+                continue
             m = self.result.metrics[entity]
             metrics_data["Entity"].append(entity)
             metrics_data["Precision"].append(m.precision)
@@ -131,8 +126,12 @@ class EvaluationPlotter:
             ]
         )
 
+        strategy_label = ""
+        if self.result.matching_config:
+            strategy_label = f" ({self.result.matching_config.strategy.value})"
+
         fig.update_layout(
-            title="Per-Entity Metrics: Precision, Recall, F1",
+            title=f"Per-Entity Metrics{strategy_label}: Precision, Recall, F1",
             xaxis_title="Entity Type",
             yaxis_title="Score",
             barmode="group",
@@ -147,14 +146,13 @@ class EvaluationPlotter:
         return html_path
 
     def plot_error_distribution(self) -> Path:
-        """Generate FP/FN error distribution by entity type.
-
-        Returns:
-            Path to generated HTML file
-        """
-        error_data = {"Entity": [], "False Positives": [], "False Negatives": []}
+        error_data: dict[str, list[Any]] = {"Entity": [], "False Positives": [], "False Negatives": []}
 
         for entity in self.result.entity_types:
+            if entity == "O":
+                continue
+            if entity not in self.result.metrics:
+                continue
             m = self.result.metrics[entity]
             error_data["Entity"].append(entity)
             error_data["False Positives"].append(m.fp)
@@ -182,20 +180,102 @@ class EvaluationPlotter:
 
         return html_path
 
-    def generate_html_report(self) -> Path:
-        """Generate single-page HTML report with all key metrics and plots.
+    def plot_multi_strategy_comparison(
+        self, multi_results: dict[str, EvaluationResult]
+    ) -> Path:
+        all_entities = sorted(
+            set(e for r in multi_results.values() for e in r.metrics.keys())
+        )
 
-        Returns:
-            Path to generated HTML file
-        """
-        # Prepare metrics summary
+        fig = go.Figure()
+        strategies = list(multi_results.keys())
+
+        for metric_name, color in [("F1", "#2196F3"), ("Precision", "#4CAF50"), ("Recall", "#FF9800")]:
+            for i, strategy in enumerate(strategies):
+                result = multi_results[strategy]
+                values = []
+                for entity in all_entities:
+                    m = result.metrics.get(entity, _EntityMetrics())
+                    values.append(getattr(m, metric_name.lower(), 0.0))
+
+                fig.add_trace(go.Bar(
+                    name=f"{strategy} - {metric_name}",
+                    x=all_entities,
+                    y=values,
+                    marker_color=color,
+                    opacity=0.5 + 0.5 * (i / max(len(strategies) - 1, 1)),
+                ))
+
+        fig.update_layout(
+            title="Multi-Strategy Comparison: P/R/F1 by Entity Type",
+            xaxis_title="Entity Type",
+            yaxis_title="Score",
+            barmode="group",
+            height=700,
+            width=1200,
+            hovermode="x unified",
+        )
+
+        html_path = self.plots_dir / "multi_strategy_comparison.html"
+        fig.write_html(str(html_path))
+
+        return html_path
+
+    def plot_ci_bars(self) -> Path:
+        fig = go.Figure()
+
+        entities = sorted(
+            e for e in self.result.metrics.keys() if e != "O"
+        )
+
+        for entity in entities:
+            m = self.result.metrics[entity]
+            ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
+            fig.add_trace(go.Bar(
+                name=entity,
+                x=["Precision", "Recall", "F1"],
+                y=[
+                    ci["precision"].point_estimate,
+                    ci["recall"].point_estimate,
+                    ci["f1"].point_estimate,
+                ],
+                error_y=dict(
+                    type="data",
+                    symmetric=False,
+                    array=[
+                        ci["precision"].ci_upper - ci["precision"].point_estimate,
+                        ci["recall"].ci_upper - ci["recall"].point_estimate,
+                        ci["f1"].ci_upper - ci["f1"].point_estimate,
+                    ],
+                    arrayminus=[
+                        ci["precision"].point_estimate - ci["precision"].ci_lower,
+                        ci["recall"].point_estimate - ci["recall"].ci_lower,
+                        ci["f1"].point_estimate - ci["f1"].ci_lower,
+                    ],
+                ),
+            ))
+
+        fig.update_layout(
+            title="Per-Entity Metrics with 95% Bootstrap CI",
+            xaxis_title="Metric",
+            yaxis_title="Score",
+            barmode="group",
+            height=600,
+            width=1000,
+        )
+
+        html_path = self.plots_dir / "ci_bars.html"
+        fig.write_html(str(html_path))
+
+        return html_path
+
+    def generate_html_report(self) -> Path:
         metrics_html = self._build_metrics_table()
         error_summary = self._build_error_summary()
-
-        # Prepare plot embeds (base64 PNG)
+        ci_summary = self._build_ci_summary()
+        strategy_info = self._build_strategy_info()
         confusion_matrix_b64 = self._embed_plot_as_base64(self.plots_dir / "confusion_matrix.png")
 
-        # Build HTML
         html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -277,6 +357,13 @@ class EvaluationPlotter:
             border-radius: 4px;
             overflow: hidden;
         }}
+        .strategy-info {{
+            background: #e8f4fd;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }}
         .footer {{
             margin-top: 40px;
             padding-top: 20px;
@@ -288,8 +375,10 @@ class EvaluationPlotter:
 </head>
 <body>
     <div class="container">
-        <h1>📊 PII Detection Evaluation Report</h1>
-        
+        <h1>PII Detection Evaluation Report</h1>
+
+        {strategy_info}
+
         <h2>Global Metrics</h2>
         <div class="metrics-summary">
             <div class="metric-card">
@@ -317,13 +406,16 @@ class EvaluationPlotter:
                 <div class="label">False Negatives</div>
             </div>
         </div>
-        
+
         <h2>Per-Entity Metrics</h2>
         {metrics_html}
-        
+
+        <h2>Confidence Intervals (95% Bootstrap)</h2>
+        {ci_summary}
+
         <h2>Error Summary</h2>
         {error_summary}
-        
+
         <div class="footer">
             <p>Generated by OpenAnonymiser Evaluation Pipeline</p>
         </div>
@@ -337,14 +429,28 @@ class EvaluationPlotter:
 
         return report_path
 
-    def _build_metrics_table(self) -> str:
-        """Build HTML table of per-entity metrics.
+    def _build_strategy_info(self) -> str:
+        cfg = self.result.matching_config
+        if cfg is None:
+            return ""
 
-        Returns:
-            HTML table string
+        return f"""
+        <div class="strategy-info">
+            <strong>Matching Strategy:</strong> {cfg.strategy.value}<br>
+            <strong>IoU Threshold:</strong> {cfg.iou_threshold}<br>
+            <strong>Coverage Threshold:</strong> {cfg.coverage_threshold}<br>
+            <strong>Score Threshold:</strong> {cfg.score_threshold}<br>
+            <strong>Length Ratio Threshold:</strong> {cfg.length_ratio_threshold}
+        </div>
         """
+
+    def _build_metrics_table(self) -> str:
         rows = []
         for entity in self.result.entity_types:
+            if entity == "O":
+                continue
+            if entity not in self.result.metrics:
+                continue
             m = self.result.metrics[entity]
             rows.append(
                 f"""
@@ -379,12 +485,49 @@ class EvaluationPlotter:
 </table>
         """
 
-    def _build_error_summary(self) -> str:
-        """Build HTML summary of errors.
+    def _build_ci_summary(self) -> str:
+        rows = []
+        global_ci = bootstrap_ci_sample_level(self.result.per_sample_counts)
+        rows.append(f"""
+    <tr>
+        <td><strong>GLOBAL</strong></td>
+        <td>{global_ci['precision'].point_estimate:.3f} [{global_ci['precision'].ci_lower:.3f}, {global_ci['precision'].ci_upper:.3f}]</td>
+        <td>{global_ci['recall'].point_estimate:.3f} [{global_ci['recall'].ci_lower:.3f}, {global_ci['recall'].ci_upper:.3f}]</td>
+        <td>{global_ci['f1'].point_estimate:.3f} [{global_ci['f1'].ci_lower:.3f}, {global_ci['f1'].ci_upper:.3f}]</td>
+    </tr>
+        """)
 
-        Returns:
-            HTML string with error counts
+        for entity in sorted(self.result.metrics.keys()):
+            if entity == "O":
+                continue
+            m = self.result.metrics[entity]
+            ci = bootstrap_ci_entity_level(m.tp, m.fp, m.fn)
+            rows.append(f"""
+    <tr>
+        <td><strong>{entity}</strong></td>
+        <td>{ci['precision'].point_estimate:.3f} [{ci['precision'].ci_lower:.3f}, {ci['precision'].ci_upper:.3f}]</td>
+        <td>{ci['recall'].point_estimate:.3f} [{ci['recall'].ci_lower:.3f}, {ci['recall'].ci_upper:.3f}]</td>
+        <td>{ci['f1'].point_estimate:.3f} [{ci['f1'].ci_lower:.3f}, {ci['f1'].ci_upper:.3f}]</td>
+    </tr>
+            """)
+
+        return f"""
+<table>
+    <thead>
+        <tr>
+            <th>Entity Type</th>
+            <th>Precision CI</th>
+            <th>Recall CI</th>
+            <th>F1 CI</th>
+        </tr>
+    </thead>
+    <tbody>
+        {''.join(rows)}
+    </tbody>
+</table>
         """
+
+    def _build_error_summary(self) -> str:
         fp_count = len(self.result.errors.get("false_positives", []))
         fn_count = len(self.result.errors.get("false_negatives", []))
         partial_count = len(self.result.errors.get("partial_matches", []))
@@ -399,16 +542,6 @@ class EvaluationPlotter:
         """
 
     def _embed_plot_as_base64(self, image_path: Path) -> str:
-        """Encode image as base64 for embedding in HTML.
-
-        Args:
-            image_path: Path to PNG image
-
-        Returns:
-            Base64-encoded data URL
-        """
-        import base64
-
         if not image_path.exists():
             return ""
 

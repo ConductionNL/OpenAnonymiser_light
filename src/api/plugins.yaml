@@ -105,12 +105,10 @@ recognizers:
 
       locatie: LOCATION
       woonplaats: LOCATION
-      gpe: LOCATION
       gemeente: LOCATION
       stad: LOCATION
       wijk: LOCATION
       buurt: LOCATION
-      straatnaam: LOCATION
       adres: LOCATION
 
       nationaliteit: NORP
@@ -123,18 +121,7 @@ recognizers:
       werkgever: ORGANIZATION
       bedrijf: ORGANIZATION
 
-      inkomen: MONEY
-      salaris: MONEY
-
-      opleidingsniveau: EDUCATION_LEVEL
-      opleiding: EDUCATION_LEVEL
-
-      gebruikersnaam: SOCIAL_MEDIA_HANDLE
-      username: SOCIAL_MEDIA_HANDLE
-      social_media: SOCIAL_MEDIA_HANDLE
-      handle: SOCIAL_MEDIA_HANDLE
-
-    flat_ner: false # true = no nested entities
+    flat_ner: true # true = no nested entities
     multi_label: true
     threshold: 0.45
     map_location: "cpu"

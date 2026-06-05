@@ -1,0 +1,43 @@
+# SpaCy NER comparison profile
+#
+# Uses standard IoU ≥ 0.5 matching — the original strict matching
+# strategy that works well for token-aligned spaCy boundaries.
+#
+# Usage:
+#   uv run benchmarks/evaluate.py --profile spacy --label-map benchmarks/label_maps/spacy_patterns.yaml
+
+matching:
+  strategy: iou
+  iou_threshold: 0.5
+  score_threshold: 0.4
+  coverage_threshold: 0.3
+  length_ratio_threshold: 0.5
+
+thresholds:
+  PERSON:
+    precision: 0.83
+    recall: 0.90
+  EMAIL:
+    precision: 1.0
+    recall: 0.96
+  BSN:
+    precision: 1.0
+    recall: 1.0
+  PHONE_NUMBER:
+    precision: 0.89
+    recall: 1.0
+  IBAN:
+    precision: 1.0
+    recall: 1.0
+  DATE:
+    precision: 1.0
+    recall: 1.0
+  LOCATION:
+    precision: 0.79
+    recall: 0.78
+  ORGANIZATION:
+    precision: 0.35
+    recall: 0.49
+  NORP:
+    precision: 0.85
+    recall: 0.66

@@ -107,12 +107,6 @@ EDGE_CASE_TEMPLATES: list[str] = [
     "{PERSON}, {NORP}, is verhuisd naar {LOCATION}.",
     "De {NORP} {PERSON} woont in {LOCATION} en stemt op {POLITICAL_PARTY}.",
 
-    # Money in various formats
-    "Salaris van {PERSON}: {MONEY}. Bonus: {MONEY}.",
-
-    # Education levels in context
-    "{PERSON} heeft een {EDUCATION_LEVEL} en werkt bij {ORGANIZATION}.",
-
     # Political context
     "{PERSON} is lid van {POLITICAL_PARTY} in {LOCATION}.",
 
@@ -121,7 +115,7 @@ EDGE_CASE_TEMPLATES: list[str] = [
     "Volg {SOCIAL_MEDIA} voor updates van {ORGANIZATION}.",
 
     # Mixed PII-dense
-    "Klantgegevens: {PERSON} ({SOCIAL_MEDIA}), {NORP}, {EDUCATION_LEVEL}. Woont {FULL_ADDRESS}. BSN {BSN}, tel {PHONE_NUMBER}, e-mail {EMAIL}.",
+    "Klantgegevens: {PERSON} ({SOCIAL_MEDIA}), {NORP}. Woont {FULL_ADDRESS}. BSN {BSN}, tel {PHONE_NUMBER}, e-mail {EMAIL}.",
 ]
 
 

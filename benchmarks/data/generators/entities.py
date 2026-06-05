@@ -1,15 +1,13 @@
 """Per-entity fake data generators for Dutch PII benchmark datasets.
 
 Uses Faker nl_NL where possible, custom generators for BSN/KVK/VAT/etc.,
-and fixed lists for entities like EDUCATION_LEVEL and POLITICAL_PARTY.
+and fixed lists for entities like POLITICAL_PARTY.
 """
 
 from __future__ import annotations
 
 import random
 import string
-from typing import Callable
-
 from faker import Faker
 
 fake = Faker("nl_NL")
@@ -61,20 +59,22 @@ ORGANIZATIONS = [
 
 ORG_SUFFIXES = ["B.V.", "N.V.", "V.O.F.", "Stichting", "Coöperatie"]
 
-EDUCATION_LEVELS = [
-    "VMBO", "HAVO", "VWO", "MBO", "HBO", "WO",
-    "VMBO-diploma", "HAVO-diploma", "VWO-diploma",
-    "MBO-diploma Techniek", "MBO-opleiding Zorg", "MBO-diploma Administratie",
-    "HBO-opleiding Communicatie", "HBO-diploma Informatica", "HBO Bedrijfskunde",
-    "WO rechtsgeleerdheid", "WO farmacie", "WO geneeskunde", "WO economie",
-    "bachelor Bedrijfskunde", "master Psychologie", "doctoraat Scheikunde",
-]
-
 POLITICAL_PARTIES = [
-    "VVD", "PvdA", "CDA", "D66", "GroenLinks", "SP", "PVV",
-    "ChristenUnie", "DENK", "Partij voor de Dieren", "SGP",
-    "JA21", "BBB", "VOLT", "BIJ1", "NSC", "Forum voor Democratie",
-    "GroenLinks-PvdA", "50PLUS",
+  "VVD",
+  "PVV",
+  "GroenLinks-PvdA",
+  "NSC",
+  "D66",
+  "BBB",
+  "SP",
+  "CDA",
+  "Partij voor de Dieren",
+  "ChristenUnie",
+  "SGP",
+  "DENK",
+  "Volt",
+  "JA21",
+  "FVD"
 ]
 
 NORPS = [
@@ -337,25 +337,6 @@ def gen_norp() -> str:
     return random.choice(NORPS)
 
 
-def gen_money() -> str:
-    """Generate a Dutch money amount."""
-    amount = random.randint(500, 15000)
-    formats = [
-        lambda: f"{amount} euro",
-        lambda: f"€{amount}",
-        lambda: f"€ {amount}",
-        lambda: f"EUR {amount}",
-        lambda: f"{amount:,} euro".replace(",", "."),
-        lambda: f"€{amount:,}".replace(",", "."),
-    ]
-    return random.choice(formats)()
-
-
-def gen_education_level() -> str:
-    """Generate a Dutch education level."""
-    return random.choice(EDUCATION_LEVELS)
-
-
 def gen_political_party() -> str:
     """Generate a Dutch political party name."""
     return random.choice(POLITICAL_PARTIES)
@@ -461,8 +442,6 @@ GENERATORS: dict[str, Callable[[], str]] = {
     "ID_NO": gen_id_no,
     "CASE_NO": gen_case_no,
     "NORP": gen_norp,
-    "MONEY": gen_money,
-    "EDUCATION_LEVEL": gen_education_level,
     "POLITICAL_PARTY": gen_political_party,
     "SOCIAL_MEDIA": gen_social_media,
     "TIME": gen_time,

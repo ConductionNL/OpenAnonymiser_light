@@ -43,8 +43,7 @@ TARGET_COUNTS: dict[str, int] = {
     "POSTCODE": 50, "EMAIL": 50, "PHONE_NUMBER": 50, "BSN": 50, "IBAN": 50,
     "KVK_NUMBER": 50, "VAT_NUMBER": 50, "LICENSE_PLATE": 50, "IP_ADDRESS": 50,
     "MAC_ADDRESS": 50, "DATE": 50, "DRIVERS_LICENSE": 50,
-    "ID_NO": 50, "CASE_NO": 50, "NORP": 100, "MONEY": 50,
-    "EDUCATION_LEVEL": 50, "SOCIAL_MEDIA": 30,
+    "ID_NO": 50, "CASE_NO": 50, "NORP": 100, "SOCIAL_MEDIA": 30,
     "TIME": 50, "CREDIT_CARD": 30,
 }
 
@@ -151,7 +150,7 @@ def generate_normal_dataset(seed: int = 42, repeats: int = 3) -> list[dict]:
             break
 
         # Cycle through all under-represented entities, not just the worst
-        gap_entities = sorted(gaps, key=gaps.get, reverse=True)
+        gap_entities = sorted(gaps, key=lambda k: gaps[k], reverse=True)
         added = False
         for worst_entity in gap_entities:
             candidates = _templates_for_entity(worst_entity, TEMPLATES)
