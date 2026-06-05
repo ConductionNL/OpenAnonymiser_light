@@ -133,14 +133,13 @@ def _remove_ner_overlapping_patterns(
     Pattern recognizers are more precise for structured tokens (email addresses,
     license plates, IBANs, etc). When spans overlap, the pattern result wins.
     This applies to both SpaCy NER and GLiNER results.
+
+    Pattern results are identified by recognizer name (not entity type) to avoid
+    a self-overlap bug: GLiNER can predict pattern entity types (EMAIL, BSN, …)
+    when ``__create_input_labels`` expands labels. If ``pattern_results`` were
+    built on entity type, GLiNER predictions would overlap with *themselves* and
+    be dropped — even when no actual pattern recognizer detected the entity.
     """
-    pattern_results = [r for r in results if r.entity_type in _PATTERN_ENTITY_TYPES]
-    if not pattern_results:
-        return results
-
-    def _overlaps_any_pattern(r: RecognizerResult) -> bool:
-        return any(r.start < p.end and r.end > p.start for p in pattern_results)
-
     def _is_gliner_result(r: RecognizerResult) -> bool:
         meta = r.recognition_metadata or {}
         return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "GLiNERRecognizer"
@@ -149,16 +148,27 @@ def _remove_ner_overlapping_patterns(
         meta = r.recognition_metadata or {}
         return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "SpacyRecognizer"
 
+    # Build pattern_results by recognizer name so GLiNER predictions for
+    # pattern entity types are NOT included — preventing the self-overlap bug.
+    pattern_results = [
+        r for r in results
+        if not _is_gliner_result(r) and not _is_spacy_result(r)
+    ]
+    if not pattern_results:
+        return results
+
+    def _overlaps_any_pattern(r: RecognizerResult) -> bool:
+        return any(r.start < p.end and r.end > p.start for p in pattern_results)
+
     def _should_keep(r: RecognizerResult) -> bool:
         if not _overlaps_any_pattern(r):
             return True
-        # Drop SpaCy NER results overlapping with patterns (identified by recognizer name,
-        # not entity type, to avoid accidentally dropping GLiNER results for shared types)
+        # Drop SpaCy NER results overlapping with patterns
         if _is_spacy_result(r):
             return False
-        # Drop GLiNER results overlapping with patterns when entity type
-        # is already covered by a pattern recognizer
-        if _is_gliner_result(r) and r.entity_type in _PATTERN_ENTITY_TYPES:
+        # Drop GLiNER results overlapping with patterns (regardless of entity
+        # type — the pattern recognizer is more precise for structured tokens)
+        if _is_gliner_result(r):
             return False
         return True
 
