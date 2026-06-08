@@ -1,0 +1,180 @@
+"""Dutch sentence templates for PII benchmark dataset generation.
+
+Each template is a string with `{ENTITY_TYPE}` placeholders.
+The generator fills these with values from entities.py and computes offsets.
+
+Templates are organized by domain to create realistic, varied Dutch text.
+"""
+
+from __future__ import annotations
+
+# ---------------------------------------------------------------------------
+# Template format:
+#   Each template is a tuple of (template_string, [(entity_type, placeholder), ...])
+#   where placeholder matches {ENTITY_TYPE} in the template.
+#
+#   The generator will replace placeholders left-to-right and track offsets.
+# ---------------------------------------------------------------------------
+
+# Each entry: template string with {PLACEHOLDER} markers.
+# The placeholder names map to entity types in entities.GENERATORS.
+
+TEMPLATES: list[str] = [
+    # ======================================================================
+    # Juridisch (10 templates)
+    # ======================================================================
+    "Verdachte {PERSON}, woonachtig {FULL_ADDRESS}, is aangehouden op {DATE}.",
+    "Zaak {CASE_NO} betreft {PERSON}, nationaliteit {NORP}. Paspoort {ID_NO}.",
+    "Proces-verbaal {CASE_NO}: verdachte {PERSON}, rijbewijs {DRIVERS_LICENSE}, kenteken {LICENSE_PLATE}, woonachtig {FULL_ADDRESS}.",
+    "In zaak {CASE_NO} is {PERSON} veroordeeld op {DATE} door de rechtbank in {LOCATION}.",
+    "De verdachte {PERSON}, geboren op {DATE}, heeft woonplaats {LOCATION} en is {NORP}.",
+    "Bezwaarschrift {CASE_NO} ingediend door {PERSON}, {NORP}. Woonplaats: {LOCATION}.",
+    "De rechtbank {LOCATION} behandelt zaak {CASE_NO} tegen {PERSON} op {DATE}.",
+    "Getuige {PERSON} uit {LOCATION} verklaarde op {DATE} dat de verdachte {PERSON} werd gezien bij {LOCATION}.",
+    "In het kader van {CASE_NO} is beslag gelegd op het voertuig met kenteken {LICENSE_PLATE}, eigendom van {PERSON}.",
+    "Aangifte door {PERSON}, {NORP}, woonachtig {FULL_ADDRESS}. Contact: {PHONE_NUMBER}.",
+
+    # ======================================================================
+    # Medisch (8 templates)
+    # ======================================================================
+    "Patiëntdossier: {PERSON}, geboortedatum {DATE}, BSN {BSN}, huisarts in {LOCATION}.",
+    "Verwijsbrief voor {PERSON} (BSN {BSN}) naar {ORGANIZATION} te {LOCATION}. Datum: {DATE}.",
+    "De patiënt {PERSON}, woonachtig in {LOCATION}, heeft op {DATE} een afspraak bij de specialist.",
+    "Medisch dossier {CASE_NO}: {PERSON}, geboortedatum {DATE}. BSN {BSN}.",
+    "Zorgverzekeraar betaalt declaratie voor {PERSON}, BSN {BSN}, behandeldatum {DATE} in {LOCATION}.",
+    "Huisartsenpraktijk in {LOCATION} heeft patiënt {PERSON} doorverwezen naar {ORGANIZATION} per {DATE}.",
+    "Recept voor {PERSON}, e-mail {EMAIL}, telefoon {PHONE_NUMBER}. Apotheek in {LOCATION}.",
+    "Opname op {DATE}: patiënt {PERSON} uit wijk {LOCATION}, BSN {BSN}.",
+
+    # ======================================================================
+    # Financieel (10 templates)
+    # ======================================================================
+    "Factuur van {ORGANIZATION}, KvK {KVK_NUMBER}, BTW {VAT_NUMBER}. Betaal naar {IBAN} voor {DATE}.",
+    "Belastingaangifte: BTW-nummer {VAT_NUMBER}, KvK {KVK_NUMBER}, onderneming {ORGANIZATION} te {LOCATION}.",
+    "Subsidieaanvraag door {ORGANIZATION}, KvK {KVK_NUMBER}, BTW {VAT_NUMBER}, werkzaam in {LOCATION}.",
+    "Huurovereenkomst: {PERSON}, {FULL_ADDRESS}. Tel: {PHONE_NUMBER}, IBAN {IBAN}.",
+    "WOZ-bezwaar: eigenaar {PERSON}, {FULL_ADDRESS}, IBAN {IBAN}, KvK {KVK_NUMBER}.",
+    "Overschrijving van {IBAN} naar {IBAN} op {DATE}. Opdrachtgever: {PERSON}.",
+    "Schuldhulpverlening voor {PERSON}, woonachtig in {LOCATION}. BSN {BSN}.",
+    "Jaarrekening {ORGANIZATION}, KvK {KVK_NUMBER}. Gevestigd te {LOCATION}.",
+    "Aanmaning aan {PERSON}, {FULL_ADDRESS}.",
+    "Creditnota {ORGANIZATION} d.d. {DATE} t.b.v. {PERSON}, IBAN {IBAN}.",
+
+    # ======================================================================
+    # HR / Werk (10 templates)
+    # ======================================================================
+    "Werkgever {ORGANIZATION} heeft werknemer {PERSON}, BSN {BSN}, aangenomen per {DATE}.",
+    "Arbeidsovereenkomst: {PERSON}, functie bij {ORGANIZATION} in {LOCATION}.",
+    "Ontslagbrief: werknemer {PERSON}, BSN {BSN}, ontslagen per {DATE}. Werkgever: {ORGANIZATION}, {LOCATION}.",
+    "HR-dossier {CASE_NO}: werknemer {PERSON}, BSN {BSN}. Werkzaam bij {ORGANIZATION} sinds {DATE}.",
+    "Medewerker {PERSON}, werkt bij {ORGANIZATION} in {LOCATION}.",
+    "Sollicitatie van {PERSON}, woonachtig te {FULL_ADDRESS}. BSN: {BSN}, e-mail: {EMAIL}.",
+    "Referentie voor {PERSON}: werkzaam bij {ORGANIZATION} van {DATE} tot heden. Contact: {PHONE_NUMBER}.",
+    "Salarisstrook {DATE}: {PERSON}, BSN {BSN}. Werkgever {ORGANIZATION}.",
+    "Stagiair {PERSON} ({EMAIL}) bij {ORGANIZATION}, startdatum {DATE}.",
+    "Promotie van {PERSON} bij {ORGANIZATION} per {DATE}.",
+
+    # ======================================================================
+    # IT / Netwerk (8 templates)
+    # ======================================================================
+    "Server {IP_ADDRESS} (MAC {MAC_ADDRESS}) rapporteerde ongeautoriseerde toegang op {DATE}.",
+    "Logboek: {DATE} poging tot verbinding van {IP_ADDRESS} (MAC {MAC_ADDRESS}) met server in {LOCATION}.",
+    "Netwerkinbraak op {DATE}: bron IP {IP_ADDRESS}, MAC {MAC_ADDRESS}. Doelwit: server in {LOCATION}.",
+    "Inlogpoging op {DATE} vanaf IP {IP_ADDRESS} met MAC-adres {MAC_ADDRESS} door gebruiker {EMAIL}.",
+    "Beveiligingsincident: host {IP_ADDRESS} met MAC {MAC_ADDRESS} kwetsbaar. Beheerder: {EMAIL}.",
+    "Firewall blokkeerde connectie van {IP_ADDRESS} naar {IP_ADDRESS} op {DATE}.",
+    "Configuratie server {IP_ADDRESS}: MAC {MAC_ADDRESS}, beheerd door {PERSON} ({EMAIL}).",
+    "Alert op {DATE}: verdacht verkeer van {IP_ADDRESS} gedetecteerd in datacenter {LOCATION}.",
+
+    # ======================================================================
+    # Overheid (8 templates)
+    # ======================================================================
+    "Vergunningaanvraag {CASE_NO} door {PERSON}, {FULL_ADDRESS}.",
+    "WOO-verzoek {CASE_NO}: ingediend door {PERSON} op {DATE}. Betreft documenten van {ORGANIZATION}.",
+    "Klacht over {ORGANIZATION}, gevestigd {FULL_ADDRESS}. KvK: {KVK_NUMBER}.",
+    "Burgerzaken {LOCATION}: identiteitsbewijs {ID_NO} afgegeven aan {PERSON} op {DATE}.",
+    "Huwelijksakte: {PERSON} en {PERSON}, gehuwd op {DATE} te {LOCATION}.",
+    "Uitkeringsaanvraag door {PERSON}, BSN {BSN}. Woonachtig {FULL_ADDRESS}.",
+    "Gemeentelijke registratie: {PERSON}, BSN {BSN}, verhuisd naar {FULL_ADDRESS} per {DATE}.",
+    "Subsidietoekenning aan {ORGANIZATION}, KvK {KVK_NUMBER}, in {LOCATION}.",
+
+    # ======================================================================
+    # Wonen / Verhuizing (8 templates)
+    # ======================================================================
+    "Verhuisbericht: {PERSON} van {FULL_ADDRESS} naar {FULL_ADDRESS}.",
+    "Koopovereenkomst woning: {PERSON}, {FULL_ADDRESS}.",
+    "Adreswijziging {PERSON}: nieuw adres {FULL_ADDRESS}. E-mail: {EMAIL}.",
+    "Huurder {PERSON}, {FULL_ADDRESS}, telefoon {PHONE_NUMBER}.",
+    "Energiecontract op naam van {PERSON}, {FULL_ADDRESS}. IBAN: {IBAN}.",
+    "Inschrijving {PERSON} op adres {FULL_ADDRESS} per {DATE}. BSN: {BSN}.",
+    "Bewonersbrief aan {PERSON}, {FULL_ADDRESS}. Betreft: renovatie vanaf {DATE}.",
+    "Taxatierapport: {FULL_ADDRESS}. Eigenaar {PERSON}.",
+
+    # ======================================================================
+    # Politie / Verkeer (8 templates)
+    # ======================================================================
+    "Politierapport: auto kenteken {LICENSE_PLATE} reed door rood in {LOCATION} op {DATE}. Bestuurder had rijbewijs {DRIVERS_LICENSE}.",
+    "Verkeersovertredingsdossier: kenteken {LICENSE_PLATE}, bestuurder {PERSON}, rijbewijs {DRIVERS_LICENSE}, geflitst op {DATE} in {LOCATION}.",
+    "Aanrijding op {DATE} in {LOCATION}: voertuig {LICENSE_PLATE} en voertuig {LICENSE_PLATE}. Getuige: {PERSON}.",
+    "Gestolen voertuig met kenteken {LICENSE_PLATE}, laatst gezien op {DATE} in {LOCATION}. Eigenaar: {PERSON}.",
+    "Bekeuring voor {PERSON}, rijbewijs {DRIVERS_LICENSE}, kenteken {LICENSE_PLATE}. Overtreding op {DATE}.",
+    "Melding: voertuig met kenteken {LICENSE_PLATE} gezien op {IP_ADDRESS} om {DATE}. Bestuurder: rijbewijs {DRIVERS_LICENSE}.",
+    "Ongeval {CASE_NO}: {PERSON} raakte gewond op {DATE} in {LOCATION}. Kenteken tegenpartij: {LICENSE_PLATE}.",
+    "Boete {CASE_NO} voor kenteken {LICENSE_PLATE} in {LOCATION}. Te betalen naar {IBAN} voor {DATE}.",
+
+    # ======================================================================
+    # Social / Profiel (8 templates)
+    # ======================================================================
+    "Profiel: {PERSON} ({SOCIAL_MEDIA}), woont in {LOCATION}.",
+    "Klantprofiel: {PERSON} ({SOCIAL_MEDIA}), werkzaam bij {ORGANIZATION}.",
+    "{PERSON} uit {LOCATION} stemde op {POLITICAL_PARTY}.",
+    "{PERSON} uit buurt {LOCATION}, {LOCATION}, stemde op {POLITICAL_PARTY}. Nationaliteit: {NORP}.",
+    "Account {SOCIAL_MEDIA}: {PERSON}, e-mail {EMAIL}, woonplaats {LOCATION}.",
+    "{PERSON}, {NORP}, is lid van {POLITICAL_PARTY} en woont in {LOCATION}.",
+    "Vrijwilliger {PERSON} ({SOCIAL_MEDIA}) werkt bij {ORGANIZATION} in {LOCATION}.",
+    "Recensie door {PERSON} ({SOCIAL_MEDIA}): werkt bij {ORGANIZATION}.",
+
+    # ======================================================================
+    # Mixed / Divers (10 templates)
+    # ======================================================================
+    "Boeking: {PERSON}, paspoort {ID_NO}, vlucht op {DATE}. Tel: {PHONE_NUMBER}, e-mail {EMAIL}.",
+    "Rapport: {PERSON} werkt bij {ORGANIZATION}. Woont in wijk {LOCATION} te {LOCATION}.",
+    "{PERSON}, BSN {BSN}, e-mail {EMAIL}, telefoon {PHONE_NUMBER}. Woonadres: {FULL_ADDRESS}.",
+    "Gegevens: {PERSON}, geboren {DATE}, {NORP}. IBAN {IBAN}, BSN {BSN}.",
+    "Leerling {PERSON}, woont {FULL_ADDRESS}. Vader werkt bij {ORGANIZATION}.",
+    "Handelsregister: {ORGANIZATION}, BTW {VAT_NUMBER}, KvK {KVK_NUMBER}. Adres: {FULL_ADDRESS}.",
+    "Gedetineerde: {PERSON}, {NORP}, {NORP}. ID-kaart {ID_NO}, adres {FULL_ADDRESS}.",
+    "Registratie: {PERSON}, IBAN {IBAN}, e-mail {EMAIL}. Werkgever: {ORGANIZATION} te {LOCATION}.",
+    "Notariële akte: {PERSON} en {PERSON} kopen woning {FULL_ADDRESS} op {DATE}.",
+    "Polis: verzekeraar {ORGANIZATION}, verzekeringnemer {PERSON}, BSN {BSN}. Ingangsdatum {DATE}.",
+
+    # ======================================================================
+    # Tijd / Afspraken (8 templates)
+    # ======================================================================
+    "Afspraak op {DATE} om {TIME} bij {ORGANIZATION} in {LOCATION}.",
+    "{PERSON} dient zich te melden op {DATE} om {TIME} bij de rechtbank in {LOCATION}.",
+    "Het spreekuur van {ORGANIZATION} begint om {TIME} op {DATE}.",
+    "De vlucht vertrekt op {DATE} om {TIME} vanaf {LOCATION}.",
+    "Operatie voor {PERSON} (BSN {BSN}) gepland op {DATE} om {TIME} in {ORGANIZATION}.",
+    "Melding op {DATE} om {TIME}: ongeautoriseerde toegang bij {FULL_ADDRESS}.",
+    "Vergadering op {DATE} om {TIME} bij {ORGANIZATION}, {FULL_ADDRESS}.",
+    "De rechtszitting in zaak {CASE_NO} begint op {DATE} om {TIME} in {LOCATION}.",
+
+    # ======================================================================
+    # Creditcard / Betalingen (5 templates)
+    # ======================================================================
+    "Betaald met creditcard {CREDIT_CARD} op {DATE} bij {ORGANIZATION}.",
+    "Fraudemelding voor kaart {CREDIT_CARD}, houder {PERSON}, {FULL_ADDRESS}.",
+    "Transactie geautoriseerd voor creditcard {CREDIT_CARD} op {DATE}.",
+    "Verloren creditcard {CREDIT_CARD} gemeld door {PERSON} bij {ORGANIZATION}.",
+    "Creditcardnummer {CREDIT_CARD} gekoppeld aan account {EMAIL} van {PERSON}.",
+
+    # ======================================================================
+    # Postcode standalone (voor coverage)
+    # ======================================================================
+    "Postcode {POSTCODE} valt onder de gemeente {LOCATION}.",
+    "Het pakket werd bezorgd op postcode {POSTCODE} in {LOCATION}.",
+    "Woongebied met postcode {POSTCODE} heeft {ORGANIZATION} als energieleverancier.",
+    "De subsidie geldt voor adressen met postcode {POSTCODE} in {LOCATION}.",
+    "Bewoners van postcode {POSTCODE} ontvingen een brief van {ORGANIZATION}.",
+]

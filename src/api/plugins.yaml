@@ -16,7 +16,7 @@ ner:
   # Presidio-side namen — request voor `["LOCATION"]` zou anders 500 geven
   # ("No matching recognizers"). LOC/GPE/ORG zijn raw spaCy-types; mapping
   # naar LOCATION/ORGANIZATION gebeurt in plugin_loader.py:144.
-  entities: [DATE, FAC, LOCATION, MONEY, NORP, ORGANIZATION, PERSON]
+  entities: [LOCATION NORP, ORGANIZATION, PERSON]
   ner_strength: 0.85
   enabled: true
 
@@ -24,60 +24,76 @@ ner:
 # Useful for weak regex patterns (ZIP codes, BSN, phone numbers, etc)
 # Only works if LemmaContextAwareEnhancer is properly configured
 context_aware_enhancer:
-  enabled: false  # Set to true to enable context enhancement
+  enabled: true  # Set to true to enable context enhancement
   context_similarity_factor: 0.35  # How much context words boost the score
   min_score_with_context_similarity: 0.4  # Minimum score after context boost
 
 recognizers:
   - name: DutchPhoneNumberRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchIBANRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchBSNRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchDateRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: EmailRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchPassportIdRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchDriversLicenseRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchVATRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchKvKRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: DutchLicensePlateRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: IPv4Recognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: CaseNumberRecognizer
     type: pattern
-    enabled: false
+    enabled: true
 
   - name: MACAddressRecognizer
+    type: pattern
+    enabled: true
+
+  - name: DutchPostcodeRecognizer
+    type: pattern
+    enabled: true
+
+  - name: SocialMediaHandleRecognizer
+    type: pattern
+    enabled: true
+
+  - name: TimeRecognizer
+    type: pattern
+    enabled: true
+
+  - name: CreditCardRecognizer
     type: pattern
     enabled: true
 
@@ -89,27 +105,26 @@ recognizers:
       # CONTEXTUELE PII — alleen entiteiten die patterns niet kunnen detecteren
       persoon: PERSON
       naam: PERSON
+
       locatie: LOCATION
       woonplaats: LOCATION
-      gpe: LOCATION
       gemeente: LOCATION
       stad: LOCATION
       wijk: LOCATION
       buurt: LOCATION
-      straatnaam: STREET_ADDRESS
-      adres: STREET_ADDRESS
+      adres: LOCATION
+
       nationaliteit: NORP
       religie: NORP
+      etniciteit: NORP
       politieke_groep: NORP
-      politieke_partij: POLITICAL_PARTY
+      politieke_partij: NORP
+
       organisatie: ORGANIZATION
       werkgever: ORGANIZATION
       bedrijf: ORGANIZATION
-      inkomen: INCOME
-      salaris: INCOME
-      opleidingsniveau: EDUCATION_LEVEL
-      opleiding: EDUCATION_LEVEL
-    flat_ner: false # true = no nested entities
+
+    flat_ner: true # true = no nested entities
     multi_label: true
     threshold: 0.45
     map_location: "cpu"

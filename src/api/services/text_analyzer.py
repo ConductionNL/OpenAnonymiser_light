@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, RecognizerResult
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_analyzer.predefined_recognizers import SpacyRecognizer
-from presidio_analyzer.context_aware_enhancers import LemmaContextAwareEnhancer
+from presidio_analyzer.context_aware_enhancers import LemmaContextAwareEnhancer, ContextAwareEnhancer
 from presidio_anonymizer import AnonymizerEngine
 from presidio_anonymizer.entities import EngineResult, OperatorConfig
 
@@ -73,15 +73,27 @@ def _build_analyzer() -> AnalyzerEngine:
     #     registry.remove_recognizer("SpacyRecognizer")
     
 
-    # Optional: Setup context-aware enhancement
-    # Useful for boosting confidence of weak regex patterns using surrounding words
-    context_enhancer = None
-    if plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("enabled", False):
-        context_enhancer = LemmaContextAwareEnhancer(
-            context_similarity_factor=plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("context_similarity_factor", 0.35),
-            min_score_with_context_similarity=plugin_cfg.ner_config.get("context_aware_enhancer", {}).get("min_score_with_context_similarity", 0.4),
+    # Context-aware enhancement.
+    # enabled=true  → LemmaContextAwareEnhancer with custom or default params.
+    #                  Context words on recognizers boost confidence scores.
+    # enabled=false → No-op enhancer that never boosts scores.
+    #                  Useful for benchmarking raw pattern/NER performance.
+    # Presidio creates a default LemmaContextAwareEnhancer when None is passed,
+    # so we must explicitly pass a no-op to truly disable it.
+    ctx_cfg = plugin_cfg.context_enhancer_config
+    if ctx_cfg.get("enabled", False):
+        context_enhancer: ContextAwareEnhancer = LemmaContextAwareEnhancer(
+            context_similarity_factor=ctx_cfg.get("context_similarity_factor", 0.35),
+            min_score_with_context_similarity=ctx_cfg.get("min_score_with_context_similarity", 0.4),
         )
         logger.info("Context-aware enhancement enabled (LemmaContextAwareEnhancer)")
+    else:
+        # No-op: factor=0 ensures context words never change the score.
+        context_enhancer = LemmaContextAwareEnhancer(
+            context_similarity_factor=0.0,
+            min_score_with_context_similarity=0.0,
+        )
+        logger.info("Context-aware enhancement disabled (no-op enhancer)")
 
     engine = AnalyzerEngine(
         nlp_engine=nlp_engine,
@@ -121,27 +133,42 @@ def _remove_ner_overlapping_patterns(
     Pattern recognizers are more precise for structured tokens (email addresses,
     license plates, IBANs, etc). When spans overlap, the pattern result wins.
     This applies to both SpaCy NER and GLiNER results.
+
+    Pattern results are identified by recognizer name (not entity type) to avoid
+    a self-overlap bug: GLiNER can predict pattern entity types (EMAIL, BSN, …)
+    when ``__create_input_labels`` expands labels. If ``pattern_results`` were
+    built on entity type, GLiNER predictions would overlap with *themselves* and
+    be dropped — even when no actual pattern recognizer detected the entity.
     """
-    pattern_results = [r for r in results if r.entity_type in _PATTERN_ENTITY_TYPES]
+    def _is_gliner_result(r: RecognizerResult) -> bool:
+        meta = r.recognition_metadata or {}
+        return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "GLiNERRecognizer"
+
+    def _is_spacy_result(r: RecognizerResult) -> bool:
+        meta = r.recognition_metadata or {}
+        return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "SpacyRecognizer"
+
+    # Build pattern_results by recognizer name so GLiNER predictions for
+    # pattern entity types are NOT included — preventing the self-overlap bug.
+    pattern_results = [
+        r for r in results
+        if not _is_gliner_result(r) and not _is_spacy_result(r)
+    ]
     if not pattern_results:
         return results
 
     def _overlaps_any_pattern(r: RecognizerResult) -> bool:
         return any(r.start < p.end and r.end > p.start for p in pattern_results)
 
-    def _is_gliner_result(r: RecognizerResult) -> bool:
-        meta = r.recognition_metadata or {}
-        return meta.get(RecognizerResult.RECOGNIZER_NAME_KEY) == "GLiNERRecognizer"
-
     def _should_keep(r: RecognizerResult) -> bool:
         if not _overlaps_any_pattern(r):
             return True
-        # Drop NER results overlapping with patterns
-        if r.entity_type in _NER_ENTITY_TYPES:
+        # Drop SpaCy NER results overlapping with patterns
+        if _is_spacy_result(r):
             return False
-        # Drop GLiNER results overlapping with patterns when entity type
-        # is already covered by a pattern recognizer
-        if _is_gliner_result(r) and r.entity_type in _PATTERN_ENTITY_TYPES:
+        # Drop GLiNER results overlapping with patterns (regardless of entity
+        # type — the pattern recognizer is more precise for structured tokens)
+        if _is_gliner_result(r):
             return False
         return True
 

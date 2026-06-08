@@ -24,22 +24,23 @@ class Settings:
         "EMAIL",
         "IBAN",
         "BSN",
-        "DATE_TIME",
+        "DATE",
     ]
 
     # Full set of entity types produced by all registered recognizers.
     # Used for request validation and Swagger documentation.
     ALL_SUPPORTED_ENTITIES = [
-        # NER (SpaCy via SpacyRecognizer)
+        # NER (SpaCy/GLiNER)
         "PERSON",
         "LOCATION",
         "ORGANIZATION",
+        "NORP",
         # Pattern recognizers
         "PHONE_NUMBER",
         "EMAIL",
         "IBAN",
         "BSN",
-        "DATE_TIME",
+        "DATE",
         "ID_NO",
         "DRIVERS_LICENSE",
         "CASE_NO",
@@ -47,12 +48,15 @@ class Settings:
         "KVK_NUMBER",
         "LICENSE_PLATE",
         "IP_ADDRESS",
+        "POSTCODE",
+        "MAC_ADDRESS",
+        "SOCIAL_MEDIA",
+        "TIME",
+        "CREDIT_CARD",
     ]
 
     DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "nl")
-    DEFAULT_NLP_ENGINE = os.getenv("DEFAULT_NLP_ENGINE", "spacy").lower()
-    DEFAULT_SPACY_MODEL = os.getenv("DEFAULT_SPACY_MODEL", "nl_core_news_md")
-    ALLOWED_ORIGINS = ["*"]
+    DEFAULT_SPACY_MODEL = os.getenv("DEFAULT_SPACY_MODEL", "nl_core_news_lg")
 
 
 settings: Settings = Settings()

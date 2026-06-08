@@ -1,5 +1,11 @@
 # Minimum precision/recall thresholds per entity type
 # Used by evaluate.py to validate model performance
+#
+# Can be organized by profile (gliner, spacy, strict) or used flat.
+# When --profile is given, evaluate.py reads the matching profile section.
+# Otherwise, the flat top-level keys are used.
+
+# --- Flat thresholds (used when no --profile is specified) ---
 
 PERSON:
   precision: 0.0
@@ -21,7 +27,7 @@ BSN:
   precision: 0.0
   recall: 0.0
 
-DATE_TIME:
+DATE:
   precision: 0.0
   recall: 0.0
 
@@ -60,3 +66,100 @@ IP_ADDRESS:
 CASE_NO:
   precision: 0.0
   recall: 0.0
+
+NORP:
+  precision: 0.0
+  recall: 0.0
+
+MONEY:
+  precision: 0.0
+  recall: 0.0
+
+EDUCATION_LEVEL:
+  precision: 0.0
+  recall: 0.0
+
+MAC_ADDRESS:
+  precision: 0.0
+  recall: 0.0
+
+POSTCODE:
+  precision: 0.0
+  recall: 0.0
+
+SOCIAL_MEDIA:
+  precision: 0.0
+  recall: 0.0
+
+TIME:
+  precision: 0.0
+  recall: 0.0
+
+CREDIT_CARD:
+  precision: 0.0
+  recall: 0.0
+
+# --- Profile-specific thresholds ---
+# Used with --profile gliner / --profile spacy
+# Matching config for each profile is in benchmarks/profiles/<name>.yaml
+
+gliner:
+  PERSON:
+    precision: 0.80
+    recall: 0.85
+  LOCATION:
+    precision: 0.75
+    recall: 0.80
+  ORGANIZATION:
+    precision: 0.65
+    recall: 0.70
+  NORP:
+    precision: 0.70
+    recall: 0.60
+  MONEY:
+    precision: 0.70
+    recall: 0.65
+  EMAIL:
+    precision: 0.95
+    recall: 0.95
+  BSN:
+    precision: 0.95
+    recall: 0.95
+  IBAN:
+    precision: 0.95
+    recall: 0.95
+  PHONE_NUMBER:
+    precision: 0.80
+    recall: 0.85
+  DATE:
+    precision: 0.95
+    recall: 0.95
+
+spacy:
+  PERSON:
+    precision: 0.83
+    recall: 0.90
+  EMAIL:
+    precision: 1.0
+    recall: 0.96
+  BSN:
+    precision: 1.0
+    recall: 1.0
+  PHONE_NUMBER:
+    precision: 0.89
+    recall: 1.0
+  IBAN:
+    precision: 1.0
+    recall: 1.0
+  DATE:
+    precision: 1.0
+    recall: 1.0
+  LOCATION:
+    precision: 0.79
+    recall: 0.78
+  ORGANIZATION:
+    precision: 0.35
+    recall: 0.49
+  NORP:
+    precision: 0.85
+    recall: 0.66

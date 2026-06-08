@@ -1,0 +1,50 @@
+# Label mapping: GLiNER + custom pattern recognizers
+#
+# GLiNER (urchade/gliner_multi_pii-v1) + patterns covers all entity types.
+# Based on the entity_mapping in src/api/plugins.yaml.
+# GLiNER labels that map to the same entity type are merged;
+# labels not produced by this pipeline are set to null.
+#
+# Used automatically with: uv run benchmarks/evaluate.py --profile gliner
+
+# --- GLiNER entity_mapping (from plugins.yaml) ---
+persoon: PERSON
+naam: PERSON
+locatie: LOCATION
+woonplaats: LOCATION
+gemeente: LOCATION
+stad: LOCATION
+wijk: LOCATION
+buurt: LOCATION
+adres: LOCATION
+nationaliteit: NORP
+religie: NORP
+etniciteit: NORP
+politieke_groep: NORP
+politieke_partij: NORP
+organisatie: ORGANIZATION
+werkgever: ORGANIZATION
+bedrijf: ORGANIZATION
+
+# --- Custom pattern recognizers (identity map) ---
+BSN: BSN
+CASE_NO: CASE_NO
+DATE: DATE
+DRIVERS_LICENSE: DRIVERS_LICENSE
+EMAIL: EMAIL
+IBAN: IBAN
+ID_NO: ID_NO
+IP_ADDRESS: IP_ADDRESS
+KVK_NUMBER: KVK_NUMBER
+LICENSE_PLATE: LICENSE_PLATE
+MAC_ADDRESS: MAC_ADDRESS
+PHONE_NUMBER: PHONE_NUMBER
+POSTCODE: POSTCODE
+VAT_NUMBER: VAT_NUMBER
+SOCIAL_MEDIA: SOCIAL_MEDIA
+TIME: TIME
+CREDIT_CARD: CREDIT_CARD
+
+# --- Entities not produced by this pipeline ---
+EDUCATION_LEVEL: null
+MONEY: null

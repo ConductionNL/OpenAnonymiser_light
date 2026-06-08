@@ -20,6 +20,7 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 
 ### Changed
 - **spaCy `nl_core_news_lg` overal** — lokaal venv, container, K8s. Was: lg lokaal, md in container. Beleid bijgesteld voor consistentie. `Dockerfile.{classic,gpu}` zetten `ENV DEFAULT_SPACY_MODEL=nl_core_news_lg`. Plugin yaml's defaulten nu op `${DEFAULT_SPACY_MODEL:-nl_core_news_lg}`. CLAUDE.md spaCy-sectie bijgewerkt.
+- **Overlap-resolutie GLiNER/patterns** — `_remove_ner_overlapping_patterns()` in `text_analyzer.py` verwijdert nu GLiNER- en spaCy-resultaten die overlappen met pattern-recognizer spans (bijv. IBAN, BSN, e-mail). Pattern-recognizers winnen omdat ze nauwkeuriger zijn voor gestructureerde tokens. Bugfix: pattern-resultaten worden geïdentificeerd op recognizer-name (niet entity type), waardoor GLiNER-voorspellingen voor pattern-entity-types niet per ongeluk zichzelf droppen (self-overlap bug).
 - `.github/workflows/docker-build.yml` test-job: `DEFAULT_SPACY_MODEL=nl_core_news_lg` (was md). Aparte md-pip-install-step verwijderd; `uv sync` installeert lg uit pyproject hard dep.
 - Lokale dev-pad voor wie GPU-flavor wil testen: `uv sync --extra gpu` (was: gliner standaard mee). Documenteer in README.
 
