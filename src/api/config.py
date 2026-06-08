@@ -58,6 +58,9 @@ class Settings:
     DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "nl")
     DEFAULT_SPACY_MODEL = os.getenv("DEFAULT_SPACY_MODEL", "nl_core_news_lg")
 
+    # CORS: komma-gescheiden lijst van toegestane origins. "*" = alle origins.
+    ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 
 settings: Settings = Settings()
 
