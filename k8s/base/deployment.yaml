@@ -31,6 +31,21 @@ spec:
           envFrom:
             - configMapRef:
                 name: openanonymiser-config
+          # Pin de CPU-threadpools op de cpu-limit (resources.limits.cpu hieronder).
+          # Zonder dit leest torch/OpenMP os.cpu_count() = NODE-cores (bv. 32) i.p.v. de
+          # cgroup-quota → oversubscription + CFS-throttling → ~10x trager (gemeten:
+          # 1,3k tekens 23-30s i.p.v. 2s). Houd deze waarden gelijk aan limits.cpu.
+          env:
+            - name: OMP_NUM_THREADS
+              value: "6"
+            - name: MKL_NUM_THREADS
+              value: "6"
+            - name: OPENBLAS_NUM_THREADS
+              value: "6"
+            - name: NUMEXPR_NUM_THREADS
+              value: "6"
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
