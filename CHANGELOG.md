@@ -6,6 +6,10 @@ De opmaak is gebaseerd op [Keep a Changelog](https://keepachangelog.com/en/1.1.0
 
 ## [Unreleased]
 
+### Fixed
+- **K8s image-namespace gecorrigeerd naar `conduction2022`** (`k8s/base` + dev/acc/prod-overlays): de manifests pullden uit `conductiondeploy/openanonymiser-light`, maar die namespace wordt door géén workflow gepusht — `docker-build.yml` en `retag-image.yml` bouwen/pushen naar `conduction2022`. Gevolg: stale/ontbrekende tags → `ImagePullBackOff`. Overlays volgen nu de CI-tags: dev→`:dev` (gpu), acc→`:acc` (classic), prod→`:latest` (classic).
+- **K8s base-deployment sizing + probes** (`k8s/base/deployment.yaml`): resources opgehoogd (requests `2 CPU / 3Gi`, limits `6 CPU / 6Gi`; was `200m/1Gi` → `1000m/4Gi`) op basis van gemeten gpu/GLiNER-gebruik (~2,6 Gi RAM, ~6 kernen). De oude `1000m` CPU-limit throttlede de synchrone worker (`--workers 1`), die tijdens een request de `/api/v1/health`-probe blokkeerde → liveness-fail → CrashLoop. `startupProbe` toegevoegd (tot ~5 min cold-start) + `timeoutSeconds: 5` op readiness/liveness. NB: dev-overlay = gpu (zware sizing); acc/prod = classic (lichter, sizing kan later omlaag).
+
 ### Added
 - **Build pipeline gesplitst in `classic` + `gpu` flavors** (`Dockerfile.classic` / `Dockerfile.gpu`, beide multi-stage met `python:3.12.11-slim-bookworm` runtime). Plugin-config-selectie via `PLUGINS_CONFIG` env-var.
 - `pyproject.toml` extras-split: `gliner` verhuisd van base `dependencies` naar `[project.optional-dependencies].gpu`. Gevolg: classic-image trekt geen torch / CUDA / triton mee → **6 GB → 1.1 GB**.

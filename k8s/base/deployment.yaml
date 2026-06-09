@@ -21,7 +21,10 @@ spec:
         fsGroup: 1000
       containers:
         - name: openanonymiser
-          image: docker.io/conductiondeploy/openanonymiser-light:latest
+          # conduction2022 = de namespace die de CI bouwt/pusht (docker-build.yml +
+          # retag-image.yml). conductiondeploy werd door geen enkele workflow geraakt.
+          # Tag hier is placeholder; overlays overschrijven via images:newTag.
+          image: docker.io/conduction2022/openanonymiser-light:latest
           ports:
             - containerPort: 8080
               protocol: TCP
@@ -34,28 +37,41 @@ spec:
             capabilities:
               drop: [ALL]
           resources:
+            # Gemeten (CPU-only): ~2,6 GiB RAM, wil ~6 kernen tijdens inference.
+            # Was requests 1Gi (te laag vs werkelijk 2,6Gi) + cpu-limit 1000m = 1 core →
+            # throttling, en de synchrone worker (--workers 1) blokkeerde de health-probe
+            # tijdens een request → liveness-fail → CrashLoop.
             requests:
-              cpu: "200m"
-              memory: "1Gi"
+              cpu: "2"
+              memory: "3Gi"
             limits:
-              cpu: "1000m"
-              memory: "4Gi"
+              cpu: "6"
+              memory: "6Gi"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+          # Cold start (model-load) duurt tientallen seconden → startupProbe geeft tot
+          # ~5 min ruimte vóór readiness/liveness gaan tellen. timeoutSeconds opgehoogd
+          # (default 1s is krap als de worker even bezig is).
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /api/v1/health
               port: 8080
-            initialDelaySeconds: 20
             periodSeconds: 10
+            timeoutSeconds: 5
             failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /api/v1/health
               port: 8080
-            initialDelaySeconds: 30
             periodSeconds: 30
+            timeoutSeconds: 5
             failureThreshold: 3
       volumes:
         - name: tmp
